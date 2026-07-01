@@ -11,7 +11,7 @@ max_disk_gb: 500
 # coordinator's agency verdict permits and the ceilings above hold — use
 # `claude-coordinator-agency` to gauge token + hardware headroom.
 # See ~/.claude/rules/agency.md.
-agency: standard
+agency: max
 
 # Model roles. Skills read these as the defaults; CLI flags override per-call.
 # "opus" is a floating alias that resolves to the latest Opus release, so this
