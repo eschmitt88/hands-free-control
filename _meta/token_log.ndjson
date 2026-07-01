@@ -1,0 +1,14 @@
+{
+  "timestamp": "2026-07-01T15:05:21Z",
+  "session_id": "7bf5818c-05a8-4437-98bf-2b2e6f40cdc8",
+  "input_tokens": 17266,
+  "output_tokens": 41189,
+  "cache_read_tokens": 918057,
+  "cache_creation_tokens": 86874,
+  "tools_used_summary": {
+    "AskUserQuestion": 1,
+    "Skill": 2,
+    "Bash": 5,
+    "Agent": 4
+  }
+}
