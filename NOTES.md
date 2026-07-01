@@ -35,8 +35,20 @@ SessionEnd hook backstops this if you forget.
   wrong Look & Touch DOI, unverified NextMind claims.
 
 ### Next
-- First experiment candidate: **characterize gaze/head accuracy on the user's
-  own webcam** (°-error + dwell false-activation rate) — HCE splits apply.
 - Decide MVP altitude: voice-first + grid overlays vs full multimodal.
 - Re-fetch `camera-mouse` and `put-that-there-1980` (network-failed, reconstructed).
-- User to curate: the graph is built; pick the direction to prototype.
+
+### Update — first experiment built (2026-07-01)
+- Scaffolded `experiments/2026-07-01-webcam-gaze-accuracy/` (HCE, ADR 0001).
+- Built + committed the full harness: `gazelib/` (geometry, scale-invariant
+  ridge calibration, dwell sim, MediaPipe features), interactive `collect.py`
+  (workstation), headless `analyze.py`, and `synth.py` validator.
+- **Synth self-check passes tightly** (inject 2/4/8° → recover 2.12/3.69/7.25°),
+  proving the metric math + calibration before any real session. Two real bugs
+  fixed en route: Ridge scale-shrinkage (→ StandardScaler pipeline) and
+  errors-in-variables attenuation from noisy calibration.
+- **BLOCKED ON USER:** aiserver2026 is headless and its `/dev/video0` is the HDMI
+  capture card, not a webcam. The collection session must run on the user's
+  workstation (cam above monitor). Steps are in the experiment README.
+- On session data: run `analyze.py` → `metrics.json` (validation); `analyze.py
+  --final` → `final_metrics.json` (held-out test) only at chain end.
