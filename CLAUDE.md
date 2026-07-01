@@ -5,7 +5,12 @@ principles; this file refines them for this project.
 
 ## What this project is about
 
-One or two sentences. Fill in when the project stops being exploratory.
+Building hands-free desktop control for an able-bodied user with a webcam and
+mic. Working thesis (from the 2026-07-01 prior-art survey): **voice is the
+primary channel with an LLM intent layer; gaze/head tracking provides coarse
+pointing; the two combine as "gaze points, voice confirms."** Consumer EEG/BCI
+was surveyed and parked (bandwidth ceiling ~30 bits/min). See
+`mocs/multimodal-gaze-voice.md` for the spine.
 
 ## Layout (see user CLAUDE.md for the full rationale)
 
