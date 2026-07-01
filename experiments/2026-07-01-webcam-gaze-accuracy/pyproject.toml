@@ -1,0 +1,28 @@
+[project]
+name = "webcam-gaze-accuracy"
+version = "0.1.0"
+description = "Webcam gaze/head-pose accuracy characterization (hands-free-control experiment)."
+requires-python = ">=3.10"
+dependencies = [
+    "numpy",
+    "scikit-learn",
+    "pyyaml",
+]
+
+# Workstation-only channel (needs a webcam + display). A headless analysis box
+# installs only the core deps; the collection workstation adds this extra:
+#   uv sync                 # headless: analyze.py, synth.py
+#   uv sync --extra collect # workstation: collect.py
+[project.optional-dependencies]
+collect = [
+    "mediapipe",
+    "opencv-python",
+    "pygame",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["gazelib"]
