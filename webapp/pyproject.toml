@@ -1,0 +1,16 @@
+[project]
+name = "hfc-webapp"
+version = "0.1.0"
+description = "In-browser webcam gaze/head-pose calibration collector + server-side scoring for the hands-free-control webcam-gaze-accuracy experiment."
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "pyyaml",
+    "numpy",
+    "scikit-learn",
+]
+
+# No package to build — this is a plain service directory (serve.py + static/).
+[tool.uv]
+package = false
