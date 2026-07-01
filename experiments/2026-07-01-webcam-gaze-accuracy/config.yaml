@@ -1,0 +1,35 @@
+# Experiment: webcam-gaze-accuracy — inputs, hyperparameters, seeds.
+seed: 42
+
+# --- Screen geometry: MEASURE THESE on the workstation running collect.py ---
+# width_mm/height_mm = physical ACTIVE display area (not the bezel).
+# viewing_distance_mm = eyes-to-screen distance during the session.
+# These convert on-screen pixel error into cm and into degrees of visual angle.
+screen:
+  width_px: 2560
+  height_px: 1440
+  width_mm: 597
+  height_mm: 336
+viewing_distance_mm: 600
+
+# --- Capture ---
+capture:
+  camera_index: 0
+  frames_per_target: 30   # frames captured per dot (aggregated to one sample)
+  warmup_frames: 10       # frames discarded after a dot appears (eye settling)
+  target_radius_px: 20    # drawn dot radius
+
+# --- Estimators (both are fit and compared) ---
+estimator:
+  ridge_alpha: 1.0        # L2 regularization for the calibration regression
+  methods: [gaze, headpose]
+
+# --- Dwell simulation (false-activation metric) ---
+# A "false activation" = the estimated point dwells (radius_px for dwell_ms)
+# inside a decoy cell that is NOT the intended target.
+dwell:
+  radius_px: 60
+  dwell_ms: 800
+  decoy_grid: [6, 4]      # screen divided into 6x4 cells for the decoy check
+
+# Target-position splits (calibration/validation/test) are in splits.yaml.
