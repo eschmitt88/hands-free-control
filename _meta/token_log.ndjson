@@ -171,3 +171,20 @@
     "Edit": 3
   }
 }
+{
+  "timestamp": "2026-07-01T15:34:45Z",
+  "session_id": "7bf5818c-05a8-4437-98bf-2b2e6f40cdc8",
+  "input_tokens": 35944,
+  "output_tokens": 416423,
+  "cache_read_tokens": 10528987,
+  "cache_creation_tokens": 348296,
+  "tools_used_summary": {
+    "AskUserQuestion": 1,
+    "Skill": 2,
+    "Bash": 15,
+    "Agent": 15,
+    "Write": 8,
+    "Edit": 7,
+    "Read": 1
+  }
+}

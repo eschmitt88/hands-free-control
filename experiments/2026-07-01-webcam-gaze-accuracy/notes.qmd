@@ -1,0 +1,11 @@
+---
+title: "webcam-gaze-accuracy"
+format: html
+---
+
+## Analysis
+
+```{python}
+# Load metrics.json (validation) once a session has been collected + analyzed.
+# import json; print(json.load(open("metrics.json")))
+```

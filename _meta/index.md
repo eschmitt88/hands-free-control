@@ -22,7 +22,9 @@ See `literature/` and the four candidate triage files in `raw/_candidates/`.
 
 ## Active experiments
 
-(none yet — literature/concept graph built; first experiment TBD)
+- `experiments/2026-07-01-webcam-gaze-accuracy/` — characterize gaze + head-pose
+  accuracy on the user's webcam (°-error, dwell false-activation). **HCE-scoped**
+  (has `splits.yaml`). status: running (blocked on workstation data collection).
 
 ## Open questions
 
