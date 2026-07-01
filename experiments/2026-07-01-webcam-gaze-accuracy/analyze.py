@@ -38,6 +38,48 @@ def load_yaml(path: str) -> dict:
         return yaml.safe_load(fh)
 
 
+def apply_session_geometry(cfg: dict, session: str) -> dict:
+    """Override screen geometry from the session's ``meta.json`` when present.
+
+    The real monitor geometry (physical size + eye-to-screen distance) is
+    measured in the browser collector, not ``config.yaml``. When a session dir
+    carries a ``meta.json`` that supplies ``screen_px`` + ``screen_mm`` +
+    ``viewing_distance_mm``, those OVERRIDE the cfg ``screen`` block and
+    ``viewing_distance_mm`` for the geometry / visual-angle math. Falls back to
+    ``config.yaml`` when the file or any of those keys is absent — so synthetic
+    sessions (whose meta.json has no ``screen_mm``) still use config.yaml, and
+    the metric math is unchanged for the headless self-check. Returns a new cfg
+    dict (the input is not mutated).
+    """
+    meta_path = os.path.join(session, "meta.json")
+    if not os.path.isfile(meta_path):
+        return cfg
+    try:
+        with open(meta_path, "r", encoding="utf-8") as fh:
+            meta = json.load(fh)
+    except (OSError, ValueError):
+        return cfg
+    spx = meta.get("screen_px")
+    smm = meta.get("screen_mm")
+    vdist = meta.get("viewing_distance_mm")
+    # Require all three (and well-formed px/mm pairs); otherwise keep config.yaml.
+    if not (spx and smm and vdist):
+        return cfg
+    try:
+        w_px, h_px = float(spx[0]), float(spx[1])
+        w_mm, h_mm = float(smm[0]), float(smm[1])
+        vdist = float(vdist)
+    except (TypeError, ValueError, IndexError):
+        return cfg
+    cfg = dict(cfg)
+    cfg["screen"] = dict(cfg.get("screen", {}))
+    cfg["screen"].update(
+        {"width_px": w_px, "height_px": h_px, "width_mm": w_mm, "height_mm": h_mm}
+    )
+    cfg["viewing_distance_mm"] = vdist
+    return cfg
+
+
 def latest_session(results_dir: str) -> Optional[str]:
     """Return the most recently modified results/session_* dir, or None."""
     candidates = [
@@ -123,6 +165,9 @@ def main() -> int:
     if session is None:
         raise SystemExit(f"no session found under {results_dir} (run collect.py or synth.py first)")
     session = os.path.abspath(session)
+
+    # Per-session monitor geometry (browser-collected) overrides config.yaml.
+    cfg = apply_session_geometry(cfg, session)
 
     cal_samples = load_session_jsonl(os.path.join(session, "calibration.jsonl"))
     val_samples = load_session_jsonl(os.path.join(session, "validation.jsonl"))

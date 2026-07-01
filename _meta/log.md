@@ -10,3 +10,4 @@ skills; read by `/lint`.
 2026-07-01 15:33 synthesize 78 concepts across 8 clusters
 2026-07-01 15:33 promote-moc 4 MoCs: multimodal-gaze-voice, voice-control, gaze-head-pointing, consumer-bci
 2026-07-01 20:20 new-experiment webcam-gaze-accuracy (HCE opt-in, ADR 0001)
+2026-07-01 20:55 webapp: in-browser gaze collector on :8104 (HTTPS), reuses analyze.py; smoke-tested

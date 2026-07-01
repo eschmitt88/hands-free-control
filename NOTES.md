@@ -52,3 +52,20 @@ SessionEnd hook backstops this if you forget.
   workstation (cam above monitor). Steps are in the experiment README.
 - On session data: run `analyze.py` → `metrics.json` (validation); `analyze.py
   --final` → `final_metrics.json` (held-out test) only at chain end.
+
+### Update — collection moved to a webapp (no desktop install)
+- User asked for a webapp instead of a local install. Built `webapp/`: FastAPI on
+  aiserver:8104 (HTTPS) serving an **in-browser MediaPipe FaceLandmarker** collector;
+  webcam capture happens in the desktop browser, samples POST back, and the
+  experiment's validated `analyze.py` scores them server-side (validation only; test
+  held out — HCE preserved).
+- TLS via a cert signed by the **dotaml-live local CA** (already trusted on
+  desktop-2020) — SANs cover aiserver2026 / tailnet / LAN; no new import, no sudo.
+- Systemd `--user` unit `hands-free-gaze.service` (enabled, linger on); port 8104
+  registered in `~/claude-system/registry/services.yaml`.
+- **Smoke-tested over real HTTPS**: /healthz, /api/config (splits 9/16/5), page load,
+  and full POST session→analyze loop all green; browser geometry override confirmed.
+  Fixed one bug: serve.py subprocess couldn't find `uv` under systemd's minimal PATH
+  → resolve UV_BIN by absolute path.
+- **URL: https://aiserver2026:8104/** — open on the workstation, allow camera, do the
+  dot session. That's the whole workflow now.

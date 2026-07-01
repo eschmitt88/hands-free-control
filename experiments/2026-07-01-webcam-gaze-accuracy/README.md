@@ -47,17 +47,33 @@ State precisely what we expect, before running anything:
 - Data: `results/session_*/` (per-session jsonl of feature vectors + targets).
   Validation split is the search signal; **test is off-limits until final scoring**.
 
-### How to run (on the workstation with the webcam)
+### How to run — PRIMARY: browser, no install
+
+The collector is served as a webapp (see `../../webapp/`), so the workstation just
+opens a URL — no Python/MediaPipe install. On the machine with the webcam:
+
+1. Open **https://aiserver2026:8104/** (or `https://100.70.9.10:8104/`). The cert is
+   trusted by any device that already trusts the dotaml-live rootCA (e.g. desktop-2020).
+2. On the pre-flight screen: allow the camera, confirm a face is detected, enter your
+   **physical screen size + viewing distance** (used for the °-error conversion).
+3. Click Start → fullscreen → look at each dot (calibration → validation → test).
+4. Results (validation gaze/head error in ° and cm, dwell false-activation) render in
+   the browser. Data is saved on aiserver at
+   `results/session_web_<ts>/` and scored by this experiment's `analyze.py`
+   (validation only; **test stays held out** for the final pass).
+
+### Alternate: local Python collector (no server)
 
 ```sh
 cd experiments/2026-07-01-webcam-gaze-accuracy
-uv sync                          # installs mediapipe, opencv, pygame, ...
-# measure and edit config.yaml: screen.width_mm/height_mm, viewing_distance_mm
+uv sync --extra collect          # mediapipe, opencv, pygame
+# measure + edit config.yaml: screen.width_mm/height_mm, viewing_distance_mm
 uv run python collect.py         # sit ~60 cm away; look at each dot, press space
 uv run python analyze.py         # writes metrics.json (validation)
 ```
 
-The analysis (`analyze.py`, `synth.py`) also runs headless on aiserver2026.
+The analysis (`analyze.py`, `synth.py`) runs headless on aiserver2026; `synth.py
+--selfcheck` validates the metric math with no webcam.
 
 ## Result
 

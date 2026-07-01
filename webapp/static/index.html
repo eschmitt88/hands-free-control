@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Webcam Gaze / Head-Pose Calibration</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <!-- ============ Landing / pre-flight ============ -->
+  <section id="landing" class="screen active">
+    <div class="card">
+      <h1>Webcam gaze &amp; head-pose calibration</h1>
+      <p class="lede">
+        This runs entirely in your browser (MediaPipe FaceLandmarker). You'll
+        look at a sequence of dots; the app measures how accurately your gaze and
+        head pose can point at the screen. Nothing but small feature vectors
+        leave your machine &mdash; no video is uploaded.
+      </p>
+
+      <div class="preflight">
+        <div class="preview-wrap">
+          <video id="preview" autoplay playsinline muted></video>
+          <div id="face-indicator" class="badge bad">face: searching&hellip;</div>
+        </div>
+
+        <form id="geom-form" class="geom">
+          <h2>Screen geometry</h2>
+          <p class="hint">Measure the <em>active display area</em> (not the bezel),
+             or use the diagonal helper.</p>
+
+          <label>Screen width (mm)
+            <input type="number" id="width_mm" step="1" min="1" required />
+          </label>
+          <label>Screen height (mm)
+            <input type="number" id="height_mm" step="1" min="1" required />
+          </label>
+
+          <fieldset class="diag">
+            <legend>Diagonal helper (optional)</legend>
+            <label>Diagonal (inches)
+              <input type="number" id="diag_in" step="0.1" min="1" placeholder="e.g. 27" />
+            </label>
+            <button type="button" id="diag-apply" class="ghost">Fill W/H from diagonal</button>
+            <p class="hint">Assumes a 16:9 panel.</p>
+          </fieldset>
+
+          <label>Viewing distance (cm)
+            <input type="number" id="viewing_cm" step="1" min="1" required />
+          </label>
+
+          <p class="hint" id="px-readout"></p>
+        </form>
+      </div>
+
+      <div class="actions">
+        <button id="start-btn" disabled>Start calibration</button>
+        <span id="landing-status" class="status"></span>
+      </div>
+      <p class="hint">During calibration: <b>look at each dot</b> until it fills.
+         <kbd>Space</kbd> advances, <kbd>Esc</kbd> aborts.</p>
+    </div>
+  </section>
+
+  <!-- ============ Fullscreen collector ============ -->
+  <section id="collector" class="screen">
+    <canvas id="stage"></canvas>
+    <div id="phase-hud" class="hud"></div>
+    <div id="hint-hud" class="hud hud-bottom">look at the dot &middot; Space = next &middot; Esc = abort</div>
+  </section>
+
+  <!-- ============ Results ============ -->
+  <section id="results" class="screen">
+    <div class="card">
+      <h1>Results</h1>
+      <p id="verdict" class="verdict"></p>
+      <div id="metrics-tables"></div>
+      <p id="results-meta" class="hint"></p>
+      <div class="actions">
+        <button id="again-btn">Run again</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Overlay (loading / errors) ============ -->
+  <div id="overlay" class="overlay hidden"><div class="overlay-box"><span id="overlay-msg"></span></div></div>
+
+  <script type="module" src="/static/app.js"></script>
+</body>
+</html>
