@@ -1,0 +1,44 @@
+# HCE authority for the webcam-gaze-accuracy scope (see ~/.claude/rules/evaluation.md).
+# Splits are over ON-SCREEN TARGET POSITIONS, normalized [0,1], origin = top-left.
+#   calibration -> fit the per-user feature->screen map
+#   validation  -> the SEARCH SIGNAL, written to metrics.json (every skill reads this)
+#   test        -> HELD OUT; read ONLY by the final-scoring pass (final_metrics.json).
+#                  Do not read/list/sample test targets while developing methods.
+# Changing these positions is a BREAKING change -> record in docs/decisions/.
+seed: 42
+
+calibration:            # 3x3 grid
+  - [0.10, 0.10]
+  - [0.50, 0.10]
+  - [0.90, 0.10]
+  - [0.10, 0.50]
+  - [0.50, 0.50]
+  - [0.90, 0.50]
+  - [0.10, 0.90]
+  - [0.50, 0.90]
+  - [0.90, 0.90]
+
+validation:             # 4x4 interior grid, offset from calibration
+  - [0.20, 0.20]
+  - [0.40, 0.20]
+  - [0.60, 0.20]
+  - [0.80, 0.20]
+  - [0.20, 0.40]
+  - [0.40, 0.40]
+  - [0.60, 0.40]
+  - [0.80, 0.40]
+  - [0.20, 0.60]
+  - [0.40, 0.60]
+  - [0.60, 0.60]
+  - [0.80, 0.60]
+  - [0.20, 0.80]
+  - [0.40, 0.80]
+  - [0.60, 0.80]
+  - [0.80, 0.80]
+
+test:                   # 5 held-out irregular positions — OFF-LIMITS during search
+  - [0.25, 0.75]
+  - [0.75, 0.25]
+  - [0.15, 0.35]
+  - [0.85, 0.65]
+  - [0.50, 0.15]
