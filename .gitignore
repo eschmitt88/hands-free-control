@@ -28,3 +28,9 @@ __pycache__/
 *.tar
 *.tar.gz
 *.zip
+
+# webapp TLS material — never commit private keys
+webapp/certs/
+# vendored MediaPipe model/wasm — fetched at first service start
+webapp/static/vendor/
+# web-collected sessions land in the experiment results dir (handled there)
