@@ -463,4 +463,5 @@ window.addEventListener("resize", () => {
   }
 });
 
+window.addEventListener("pagehide", () => { try { stream && stream.getTracks().forEach((t) => t.stop()); } catch { /* ignore */ } });
 init();
