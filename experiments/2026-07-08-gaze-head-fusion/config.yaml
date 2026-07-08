@@ -13,7 +13,8 @@ fusion:
   reanchor_dist_deg: 6.0     # gaze point must be at least this far from the cursor
   head_quiet_degps: 8.0      # head angular speed below this (not mid-nudge)
   fixation_ms: 100           # gaze settled (low gaze-point velocity) for this long
-  gaze_settle_degps: 25.0    # gaze-point speed below this counts as "settled"
+  gaze_settle_degps: 25.0
+  head_near_deg: 8.0        # trust gaze only within this angle of the calibration head pose    # gaze-point speed below this counts as "settled"
 
 # Head fine-cursor defaults (inherited feel from 2026-07-08-head-pointing-closed-loop).
 control:

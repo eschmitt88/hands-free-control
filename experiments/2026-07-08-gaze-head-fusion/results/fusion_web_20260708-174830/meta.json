@@ -1,0 +1,31 @@
+{
+  "screen_px": [
+    1920,
+    911
+  ],
+  "screen_mm": [
+    598,
+    336
+  ],
+  "viewing_distance_mm": 650,
+  "gaze_source": "webgazer",
+  "tune": {
+    "gain": 1000,
+    "minCutoff": 1,
+    "beta": 0.007,
+    "deadzone": 0,
+    "invert_yaw": true,
+    "invert_pitch": true,
+    "filter": "one_euro"
+  },
+  "gates": {
+    "reanchorDeg": 12,
+    "headQuietDegps": 5,
+    "fixationMs": 0,
+    "gazeSettleDegps": 25
+  },
+  "reanchors": 123,
+  "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36",
+  "generated": "2026-07-08T17:48:30",
+  "source": "webapp"
+}
