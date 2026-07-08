@@ -28,7 +28,7 @@ const video = $("preview");
 let landmarker = null, lastTs = 0, stream = null, neutral = null, previewLoop = null;
 
 // ---- tunables ----
-const TUNE = { gain: 1200, minCutoff: 1.0, beta: 0.007, deadzone: 0, winkThr: 0.5, jawThr: 0.45 };
+const TUNE = { gain: 1200, minCutoff: 1.0, beta: 0.007, deadzone: 0, winkMargin: 0.30, winkAbsMin: 0.25, jawThr: 0.45 };
 const LIM = { gain: [400, 12000], minCutoff: [0.3, 6], deadzone: [0, 40] };
 function loadTune() { try { Object.assign(TUNE, JSON.parse(localStorage.getItem("headmouse_tune") || "{}")); } catch { /* ignore */ } }
 function saveTune() { try { localStorage.setItem("headmouse_tune", JSON.stringify(TUNE)); } catch { /* ignore */ } }
@@ -88,12 +88,26 @@ function readFace(res) {
   return { yaw, pitch, bs };
 }
 
-// ---- gesture edge detector (debounced rising edge) ----
-function makeTrigger() { return { on: false }; }
-function edge(state, active) {  // returns true once on inactive->active
-  if (active && !state.on) { state.on = true; return true; }
-  if (!active) state.on = false;
-  return false;
+// ---- adaptive wink detector -------------------------------------------------
+// A static threshold on eyeBlinkL/R fails: the baseline shifts with head angle.
+// Instead track the ASYMMETRY d = blinkL - blinkR against a slow baseline, and
+// fire on a spike RELATIVE to that baseline. Full blinks move both eyes -> d flat
+// -> ignored; head-angle bias drifts into the baseline -> cancelled. Self-calibrating.
+const wink = { baseD: 0, armedL: true, armedR: true, lastFire: 0 };
+function resetWink() { wink.baseD = 0; wink.armedL = true; wink.armedR = true; wink.lastFire = 0; }
+function detectWink(bl, br, now) {
+  const d = bl - br, dev = d - wink.baseD;
+  const leftCand = dev > TUNE.winkMargin && bl > TUNE.winkAbsMin;
+  const rightCand = -dev > TUNE.winkMargin && br > TUNE.winkAbsMin;
+  let fired = null;
+  if (now - wink.lastFire > 250) {                 // refractory: no double-fire
+    if (leftCand && wink.armedL) { fired = "L"; wink.armedL = false; wink.lastFire = now; }
+    else if (rightCand && wink.armedR) { fired = "R"; wink.armedR = false; wink.lastFire = now; }
+  }
+  if (dev < TUNE.winkMargin * 0.5) wink.armedL = true;   // re-arm on relax (hysteresis)
+  if (-dev < TUNE.winkMargin * 0.5) wink.armedR = true;
+  if (!leftCand && !rightCand) wink.baseD = 0.97 * wink.baseD + 0.03 * d;  // adapt only when calm
+  return fired;
 }
 
 // ---- geometry / landing ----
@@ -123,7 +137,6 @@ async function captureNeutral() {
 // ---- desk (target grid) ----
 const canvas = $("stage"), ctx = canvas.getContext("2d");
 let st = null;
-const winkL = makeTrigger(), winkR = makeTrigger();
 
 function makeTargets(W, H) {
   const t = [], cols = 5, rows = 3, mx = W * 0.12, my = H * 0.16;
@@ -133,8 +146,8 @@ function makeTargets(W, H) {
 }
 function runDesk() {
   const W = window.innerWidth, H = window.innerHeight; canvas.width = W; canvas.height = H;
-  resetFilters();
-  st = { W, H, neutralHead: { ...neutral }, cursor: [W / 2, H / 2], clutch: false,
+  resetFilters(); resetWink();
+  st = { W, H, neutralHead: { ...neutral }, cursor: [W / 2, H / 2], cursorAnchor: [W / 2, H / 2], clutch: false,
          targets: makeTargets(W, H), clicks: 0, hits: 0, lastClick: 0, raf: null, aborted: false };
   showTunePanel(true);
   st.raf = requestAnimationFrame(deskLoop);
@@ -147,27 +160,25 @@ function deskLoop() {
 
   let mode = "MOVE";
   if (f) {
-    // clutch: jaw-open HELD freezes the cursor; release re-zeros neutral to here
+    // clutch: jaw-open HELD freezes the cursor; release RE-ANCHORS at the current
+    // cursor position (relative ratchet), so the cursor stays put — not recentered.
     const jaw = (f.bs.jawOpen || 0) > TUNE.jawThr;
     if (jaw && !st.clutch) { st.clutch = true; }
-    if (!jaw && st.clutch) { st.clutch = false; st.neutralHead = { yaw: f.yaw, pitch: f.pitch }; resetFilters(); }
+    if (!jaw && st.clutch) { st.clutch = false; st.cursorAnchor = [...st.cursor]; st.neutralHead = { yaw: f.yaw, pitch: f.pitch }; resetFilters(); }
     mode = st.clutch ? "CLUTCH · recenter head" : "MOVE";
 
     if (!st.clutch) {
       const fy = filtYaw.filter(f.yaw, now), fp = filtPitch.filter(f.pitch, now);
       const sx = invertYaw() ? -1 : 1, sy = invertPitch() ? -1 : 1;
-      let cx = st.W / 2 + sx * TUNE.gain * (fy - st.neutralHead.yaw);
-      let cy = st.H / 2 + sy * TUNE.gain * (fp - st.neutralHead.pitch);
+      let cx = st.cursorAnchor[0] + sx * TUNE.gain * (fy - st.neutralHead.yaw);
+      let cy = st.cursorAnchor[1] + sy * TUNE.gain * (fp - st.neutralHead.pitch);
       cx = Math.max(0, Math.min(st.W, cx)); cy = Math.max(0, Math.min(st.H, cy));
       if (!(TUNE.deadzone > 0 && Math.hypot(cx - st.cursor[0], cy - st.cursor[1]) <= TUNE.deadzone)) st.cursor = [cx, cy];
     }
 
-    // winks -> click (single eye high, other eye low = deliberate; both = natural blink, ignored)
-    const bl = f.bs.eyeBlinkLeft || 0, br = f.bs.eyeBlinkRight || 0;
-    const wl = bl > TUNE.winkThr && br < TUNE.winkThr * 0.55;
-    const wr = br > TUNE.winkThr && bl < TUNE.winkThr * 0.55;
-    if (edge(winkL, wl)) doClick("L");
-    if (edge(winkR, wr)) doClick("R");
+    // winks -> click (adaptive differential detector; natural both-eye blinks ignored)
+    const w = detectWink(f.bs.eyeBlinkLeft || 0, f.bs.eyeBlinkRight || 0, now);
+    if (w) doClick(w);
   }
   draw(mode);
 }
@@ -208,7 +219,7 @@ function refreshTune() {
   $("t-gain").value = TUNE.gain; $("t-gain-val").textContent = Math.round(TUNE.gain);
   $("t-steady").value = cutToSteady(TUNE.minCutoff); $("t-steady-val").textContent = cutToSteady(TUNE.minCutoff);
   $("t-dz").value = TUNE.deadzone; $("t-dz-val").textContent = TUNE.deadzone;
-  $("t-wink").value = TUNE.winkThr; $("t-wink-val").textContent = TUNE.winkThr.toFixed(2);
+  $("t-wink").value = TUNE.winkMargin; $("t-wink-val").textContent = TUNE.winkMargin.toFixed(2);
   $("t-jaw").value = TUNE.jawThr; $("t-jaw-val").textContent = TUNE.jawThr.toFixed(2);
   if ($("gain")) { $("gain").value = TUNE.gain; $("gain-readout").textContent = Math.round(TUNE.gain); }
 }
@@ -216,7 +227,7 @@ function wireTune() {
   $("t-gain").addEventListener("input", (e) => { TUNE.gain = +e.target.value; saveTune(); refreshTune(); });
   $("t-steady").addEventListener("input", (e) => { TUNE.minCutoff = steadyToCut(+e.target.value); saveTune(); refreshTune(); });
   $("t-dz").addEventListener("input", (e) => { TUNE.deadzone = +e.target.value; saveTune(); refreshTune(); });
-  $("t-wink").addEventListener("input", (e) => { TUNE.winkThr = +e.target.value; saveTune(); refreshTune(); });
+  $("t-wink").addEventListener("input", (e) => { TUNE.winkMargin = +e.target.value; saveTune(); refreshTune(); });
   $("t-jaw").addEventListener("input", (e) => { TUNE.jawThr = +e.target.value; saveTune(); refreshTune(); });
 }
 function clampStep(k, d) { TUNE[k] = Math.max(LIM[k][0], Math.min(LIM[k][1], TUNE[k] + d)); saveTune(); refreshTune(); }
