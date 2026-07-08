@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Gesture Lab — facial-command discovery</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <section id="landing" class="screen active">
+    <div class="card">
+      <h1>Gesture lab <span class="hint">which facial commands are crisp on your face?</span></h1>
+      <p class="lede">
+        Live meter of MediaPipe's 52 facial blendshapes. Make faces — the bars
+        that jump are candidate commands. A gesture is a good command if it fires
+        <b>high</b>, is <b>separable</b> (doesn't drag others up with it), and you
+        can do it <b>on demand</b>. Peaks are held so quick gestures (a blink) register.
+      </p>
+      <div class="preview-wrap" style="max-width:320px">
+        <video id="preview" autoplay playsinline muted></video>
+        <div id="face-indicator" class="badge bad">face: searching…</div>
+      </div>
+      <div class="gl-controls">
+        <label>Trigger threshold <span id="thr-val">0.50</span>
+          <input type="range" id="thr" min="0.1" max="0.95" step="0.05" value="0.5" /></label>
+        <label><input type="checkbox" id="show-all" /> show all 52 (else top 16 active)</label>
+        <button id="reset-peaks" class="ghost">Reset peaks</button>
+      </div>
+      <div id="meter"></div>
+      <p class="hint">Tip: try blink, wink L/R, brows up, squint, jaw-open, mouth
+         pucker/smile, cheek puff, nose sneer, tongue out. Note which stay green
+         cleanly without lighting up their neighbors — those are your best commands.</p>
+    </div>
+  </section>
+  <div id="overlay" class="overlay hidden"><div class="overlay-box"><span id="overlay-msg"></span></div></div>
+  <script type="module" src="/static/gestures.js?v=1"></script>
+</body>
+</html>
