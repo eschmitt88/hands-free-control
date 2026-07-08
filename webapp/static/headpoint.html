@@ -72,6 +72,11 @@
         <div id="preview-stage-wrap">
           <canvas id="preview-stage" width="480" height="270"></canvas>
           <p class="hint">Live cursor preview (head-driven). Center = neutral pose.</p>
+          <p class="hint" id="head-debug">head signal: —</p>
+          <p class="hint">Diagnostic: <b>turn your head left/right</b> — the
+             <b>horizontal</b> number should swing; <b>nod</b> — the
+             <b>vertical</b> number should swing. If they're swapped or dead,
+             tell me which number moves.</p>
         </div>
       </div>
 
@@ -108,6 +113,6 @@
   <!-- ============ Overlay (loading / errors) ============ -->
   <div id="overlay" class="overlay hidden"><div class="overlay-box"><span id="overlay-msg"></span></div></div>
 
-  <script type="module" src="/static/headpoint.js?v=2"></script>
+  <script type="module" src="/static/headpoint.js?v=3"></script>
 </body>
 </html>
