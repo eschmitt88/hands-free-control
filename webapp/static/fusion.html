@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Gaze + Head Fusion</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <!-- ============ Landing / pre-flight ============ -->
+  <section id="landing" class="screen active">
+    <div class="card">
+      <h1>Gaze + head fusion <span class="hint">eyes point, head nudges</span></h1>
+      <p class="lede">
+        Your <b>gaze</b> jumps the cursor to roughly where you look (coarse); your
+        <b>head</b> then nudges it precisely (fine). They don't fight: while your
+        head moves, gaze is frozen; the cursor only warps to your gaze when your
+        head is still and you look somewhere far. Runs entirely in your browser.
+      </p>
+
+      <div class="preflight">
+        <div class="preview-wrap">
+          <video id="preview" autoplay playsinline muted></video>
+          <div id="face-indicator" class="badge bad">face: searching&hellip;</div>
+        </div>
+        <form id="geom-form" class="geom">
+          <h2>Screen geometry</h2>
+          <label>Screen width (mm)<input type="number" id="width_mm" step="1" min="1" required /></label>
+          <label>Screen height (mm)<input type="number" id="height_mm" step="1" min="1" required /></label>
+          <fieldset class="diag">
+            <legend>Diagonal helper (optional)</legend>
+            <label>Diagonal (inches)<input type="number" id="diag_in" step="0.1" min="1" placeholder="e.g. 27" /></label>
+            <button type="button" id="diag-apply" class="ghost">Fill W/H from diagonal</button>
+          </fieldset>
+          <label>Viewing distance (cm)<input type="number" id="viewing_cm" step="1" min="1" required /></label>
+          <p class="hint" id="px-readout"></p>
+        </form>
+      </div>
+
+      <div class="calib">
+        <h2>Set up the two channels</h2>
+        <ol class="steps">
+          <li><b>Head (fine):</b> look straight at center and
+            <button type="button" id="neutral-btn" class="ghost">Capture neutral pose</button>
+            <span id="neutral-status" class="status"></span></li>
+          <li>Head gain <span id="gain-readout">–</span> (low = short-range fine-tuner):
+            <input type="range" id="gain" min="400" max="9000" step="100" value="1000" /></li>
+          <li><b>Signs:</b>
+            <label class="invert"><input type="checkbox" id="invert_yaw" checked /> invert horizontal</label>
+            <label class="invert"><input type="checkbox" id="invert_pitch" checked /> invert vertical</label></li>
+          <li><b>Gaze (coarse):</b> a 9-dot look-and-hold calibration.
+            <button type="button" id="calib-btn" class="ghost" disabled>Run gaze calibration</button>
+            <span id="calib-status" class="status"></span></li>
+        </ol>
+      </div>
+
+      <div class="actions">
+        <button id="start-btn" disabled>Start fusion (free play)</button>
+        <span id="landing-status" class="status"></span>
+      </div>
+      <p class="hint">Then: look at a target &rarr; cursor warps there &rarr; nudge your head to land it.
+         Live levers tune the handoff. <kbd>Esc</kbd> exits. &middot;
+         <a href="/headpoint">Head-only &rarr;</a> &middot; <a href="/">Gaze calib &rarr;</a></p>
+    </div>
+  </section>
+
+  <!-- ============ Fullscreen gaze calibration ============ -->
+  <section id="calib" class="screen">
+    <canvas id="calib-stage"></canvas>
+    <div id="calib-hud" class="hud hud-bottom">look at the dot until it fills &middot; Esc = cancel</div>
+  </section>
+
+  <!-- ============ Fullscreen fusion free-play ============ -->
+  <section id="fusion" class="screen">
+    <canvas id="fusion-stage"></canvas>
+    <div id="fusion-mode" class="hud"></div>
+    <div id="fusion-hud" class="hud hud-bottom">look to jump &middot; nudge head to fine-tune &middot; Esc = done</div>
+  </section>
+
+  <!-- ============ Live tuning panel (fusion) ============ -->
+  <div id="tune-panel" class="tune-panel hidden">
+    <h3>Fusion tuning <span class="hint">drag or keys</span></h3>
+    <label>Head gain <span id="t-gain-val"></span><input type="range" id="t-gain" min="400" max="12000" step="100" /></label>
+    <label>Steadiness <span id="t-steady-val"></span><input type="range" id="t-steady" min="0" max="100" step="1" /></label>
+    <label>Responsiveness <span id="t-beta-val"></span><input type="range" id="t-beta" min="0" max="0.05" step="0.001" /></label>
+    <label>Deadzone (px) <span id="t-dz-val"></span><input type="range" id="t-dz" min="0" max="40" step="1" /></label>
+    <hr />
+    <label>Re-anchor dist (°) <span id="t-red-val"></span><input type="range" id="t-red" min="2" max="20" step="0.5" /></label>
+    <label>Head-quiet (°/s) <span id="t-hq-val"></span><input type="range" id="t-hq" min="2" max="30" step="1" /></label>
+    <label>Fixation (ms) <span id="t-fix-val"></span><input type="range" id="t-fix" min="0" max="400" step="10" /></label>
+    <p class="hint" id="t-stats">re-anchors: 0</p>
+    <p class="hint">keys: <kbd>[</kbd><kbd>]</kbd> gain · <kbd>-</kbd><kbd>=</kbd> steady ·
+       <kbd>;</kbd><kbd>'</kbd> resp · <kbd>,</kbd><kbd>.</kbd> deadzone ·
+       <kbd>9</kbd><kbd>0</kbd> reanchor-dist</p>
+  </div>
+
+  <!-- ============ Results ============ -->
+  <section id="results" class="screen">
+    <div class="card">
+      <h1>Fusion session</h1>
+      <p id="verdict" class="verdict"></p>
+      <p id="results-meta" class="hint"></p>
+      <div class="actions"><button id="again-btn">Back to setup</button></div>
+    </div>
+  </section>
+
+  <div id="overlay" class="overlay hidden"><div class="overlay-box"><span id="overlay-msg"></span></div></div>
+  <script type="module" src="/static/fusion.js?v=1"></script>
+</body>
+</html>

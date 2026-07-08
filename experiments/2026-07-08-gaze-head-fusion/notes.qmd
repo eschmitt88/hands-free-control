@@ -1,0 +1,8 @@
+---
+title: "Gaze+head fusion — analysis"
+format: html
+---
+
+```{python}
+# Analysis of results/fusion_web_*/ -> metrics.json. Populated after first session.
+```
