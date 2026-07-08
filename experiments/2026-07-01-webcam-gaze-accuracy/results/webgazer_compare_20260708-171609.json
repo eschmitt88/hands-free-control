@@ -1,0 +1,16 @@
+{
+  "webgazer": {
+    "mean": 5.697979412965891,
+    "median": 6.1974418428558655,
+    "p95": 9.292819648857426,
+    "meanCm": 6.494116804926506,
+    "n": 16
+  },
+  "ours": {
+    "mean": 9.29,
+    "median": 5.56,
+    "p95": 27.42
+  },
+  "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36",
+  "generated": "2026-07-08T17:16:09"
+}

@@ -129,4 +129,15 @@ search is not finished. See `~/.claude/rules/evaluation.md`.
 
 ## Follow-up
 
-- ...
+- **WebGazer.js discriminating test (2026-07-08, `results/webgazer_compare_*.json`).**
+  Ran the mature WebGazer library through the same 9-pt calibration / 16-pt
+  validation grid to separate "our implementation" from "the webcam sensor."
+  Result: **median ~same** (WebGazer 6.2° vs ours 5.6°) — the ~5-6° median is the
+  **webcam ceiling**, confirmed by two independent implementations, not our code.
+  But WebGazer's **p95 is 9.3° vs our 27.4°** — the fat tail ("flying all over")
+  is *softwarable* (Kalman smoothing + eye-patch regression). Takeaway: webcam gaze
+  caps at ~6° median regardless of software; stability, however, is improvable in
+  software. Pixel-precise gaze needs hardware (e.g. Tobii); a *stable coarse* anchor
+  for [[gaze-head-pointing]] fusion is achievable on-webcam. Next: rebuild the
+  `2026-07-08-gaze-head-fusion` coarse channel on WebGazer and re-test the handoff
+  with a stable anchor before deciding on hardware.
