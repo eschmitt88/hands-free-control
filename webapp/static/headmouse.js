@@ -29,7 +29,7 @@ let landmarker = null, lastTs = 0, stream = null, neutral = null, previewLoop = 
 
 // ---- tunables ----
 const TUNE = { gain: 1200, minCutoff: 1.0, beta: 0.007, deadzone: 0,
-  winkMargin: 0.30, winkAbsMin: 0.25, winkMethod: "level", winkRate: 2.5,
+  winkMargin: 0.30, winkAbsMin: 0.25, winkMethod: "spike", winkRate: 1.5,
   jawThr: 0.45, smileThr: 0.40, browThr: 0.40, scrollRate: 14 };
 const LIM = { gain: [400, 12000], minCutoff: [0.3, 6], deadzone: [0, 40] };
 function loadTune() { try { Object.assign(TUNE, JSON.parse(localStorage.getItem("headmouse_tune") || "{}")); } catch { /* ignore */ } }
@@ -163,7 +163,7 @@ function runDesk() {
   const W = window.innerWidth, H = window.innerHeight; canvas.width = W; canvas.height = H;
   resetFilters(); resetWink(); smileEdge.on = false;
   st = {
-    W, H, neutralHead: { ...neutral }, cursor: [W / 2, H / 2], cursorAnchor: [W / 2, H / 2], clutch: false,
+    W, H, neutralHead: { ...neutral }, cursor: [W / 2, H / 2], cursorAnchor: [W / 2, H / 2], clutch: false, frozen: false,
     targets: makeTargets(W, H), clicks: 0, hits: 0, lastClick: 0, raf: null, aborted: false,
     // smile-drag demo: a box you grab (smile-toggle) and drop in the zone
     dragging: false, dragBox: { x: W * 0.30, y: H * 0.72, s: 54, placed: false },
@@ -182,14 +182,18 @@ function deskLoop() {
 
   let mode = "MOVE";
   if (f) {
-    // clutch: jaw-open HELD freezes the cursor; release RE-ANCHORS at the current
-    // cursor position (relative ratchet), so the cursor stays put — not recentered.
+    // The cursor is FROZEN while jaw-clutching OR while a smile is being performed
+    // (smiling physically dips the head — freeze so grab/drop use the pre-smile
+    // position). Any freeze->unfreeze re-anchors at the current cursor (relative
+    // ratchet), so the head returning from its dip doesn't jerk the cursor.
     const jaw = (f.bs.jawOpen || 0) > TUNE.jawThr;
-    if (jaw && !st.clutch) { st.clutch = true; }
-    if (!jaw && st.clutch) { st.clutch = false; st.cursorAnchor = [...st.cursor]; st.neutralHead = { yaw: f.yaw, pitch: f.pitch }; resetFilters(); }
-    mode = st.clutch ? "CLUTCH · recenter head" : "MOVE";
+    const smileScore = ((f.bs.mouthSmileLeft || 0) + (f.bs.mouthSmileRight || 0)) / 2;
+    const smileActive = smileScore > TUNE.smileThr * 0.35;   // low activity gate: catch the dip early
+    const frozen = jaw || smileActive;
+    if (!frozen && st.frozen) { st.cursorAnchor = [...st.cursor]; st.neutralHead = { yaw: f.yaw, pitch: f.pitch }; resetFilters(); }
+    st.frozen = frozen; st.clutch = jaw;
 
-    if (!st.clutch) {
+    if (!frozen) {
       const fy = filtYaw.filter(f.yaw, now), fp = filtPitch.filter(f.pitch, now);
       const sx = invertYaw() ? -1 : 1, sy = invertPitch() ? -1 : 1;
       let cx = st.cursorAnchor[0] + sx * TUNE.gain * (fy - st.neutralHead.yaw);
@@ -197,14 +201,15 @@ function deskLoop() {
       cx = Math.max(0, Math.min(st.W, cx)); cy = Math.max(0, Math.min(st.H, cy));
       if (!(TUNE.deadzone > 0 && Math.hypot(cx - st.cursor[0], cy - st.cursor[1]) <= TUNE.deadzone)) st.cursor = [cx, cy];
     }
+    mode = jaw ? "CLUTCH · recenter head" : (smileActive ? "SMILE (cursor locked)" : "MOVE");
 
     // winks -> click (adaptive differential detector; natural both-eye blinks ignored)
     const w = detectWink(f.bs.eyeBlinkLeft || 0, f.bs.eyeBlinkRight || 0, now);
     if (w) doClick(w);
 
-    // smile -> drag-lock toggle (grab the box under the cursor; drop in the zone)
-    const smile = ((f.bs.mouthSmileLeft || 0) + (f.bs.mouthSmileRight || 0)) / 2 > TUNE.smileThr;
-    if (edgeRise(smileEdge, smile)) {
+    // smile -> drag-lock toggle (fires at the full threshold; cursor already frozen
+    // by the activity gate above, so grab/drop use the pre-dip position)
+    if (edgeRise(smileEdge, smileScore > TUNE.smileThr)) {
       if (!st.dragging) {
         const b = st.dragBox;
         if (Math.abs(st.cursor[0] - b.x) < b.s && Math.abs(st.cursor[1] - b.y) < b.s) st.dragging = true;
@@ -267,8 +272,8 @@ function draw(mode) {
   ctx.textAlign = "center"; ctx.fillStyle = "#6a7280"; ctx.fillText("brows ↑/↓ scroll", sc.x + sc.w / 2, sc.y - 8);
   ctx.textAlign = "start";
   const flash = performance.now() - st.lastClick < 120;
-  ctx.beginPath(); ctx.arc(st.cursor[0], st.cursor[1], st.clutch ? 13 : 10, 0, 2 * Math.PI);
-  ctx.fillStyle = st.clutch ? "#e0a030" : (flash ? "#fff" : "#4da3ff"); ctx.fill();
+  ctx.beginPath(); ctx.arc(st.cursor[0], st.cursor[1], st.frozen ? 13 : 10, 0, 2 * Math.PI);
+  ctx.fillStyle = st.frozen ? "#e0a030" : (flash ? "#fff" : "#4da3ff"); ctx.fill();
   ctx.beginPath(); ctx.arc(st.cursor[0], st.cursor[1], 3, 0, 2 * Math.PI); ctx.fillStyle = "#fff"; ctx.fill();
   $("mode-hud").textContent = `${mode} · ${st.hits}/${st.targets.length} hit`;
 }
