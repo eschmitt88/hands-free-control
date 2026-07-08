@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Closed-loop Head Pointing</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <!-- ============ Landing / pre-flight ============ -->
+  <section id="landing" class="screen active">
+    <div class="card">
+      <h1>Closed-loop head pointing</h1>
+      <p class="lede">
+        A cursor follows your <b>head</b>. You look at a target, nudge your head
+        to drive the cursor in, and hold until it locks. This measures how fast
+        and reliably you can acquire targets in a closed loop &mdash; the head
+        estimator only needs a rough <em>gain</em> (size) calibration because you
+        correct in real time. Runs entirely in your browser; no video is uploaded.
+      </p>
+
+      <div class="preflight">
+        <div class="preview-wrap">
+          <video id="preview" autoplay playsinline muted></video>
+          <div id="face-indicator" class="badge bad">face: searching&hellip;</div>
+        </div>
+
+        <form id="geom-form" class="geom">
+          <h2>Screen geometry</h2>
+          <p class="hint">Measure the <em>active display area</em> (not the bezel),
+             or use the diagonal helper.</p>
+          <label>Screen width (mm)
+            <input type="number" id="width_mm" step="1" min="1" required />
+          </label>
+          <label>Screen height (mm)
+            <input type="number" id="height_mm" step="1" min="1" required />
+          </label>
+          <fieldset class="diag">
+            <legend>Diagonal helper (optional)</legend>
+            <label>Diagonal (inches)
+              <input type="number" id="diag_in" step="0.1" min="1" placeholder="e.g. 27" />
+            </label>
+            <button type="button" id="diag-apply" class="ghost">Fill W/H from diagonal</button>
+            <p class="hint">Assumes a 16:9 panel.</p>
+          </fieldset>
+          <label>Viewing distance (cm)
+            <input type="number" id="viewing_cm" step="1" min="1" required />
+          </label>
+          <p class="hint" id="px-readout"></p>
+        </form>
+      </div>
+
+      <!-- Neutral pose + gain calibration -->
+      <div class="calib">
+        <h2>Calibrate the head cursor</h2>
+        <ol class="steps">
+          <li>Look <b>straight at the center dot</b> and click
+              <button type="button" id="neutral-btn" class="ghost">Capture neutral pose</button>
+              <span id="neutral-status" class="status"></span></li>
+          <li>Move the <b>gain</b> so small head turns sweep the cursor across the
+              screen without straining. The live box below previews it.</li>
+        </ol>
+        <label class="gain-label">Gain (px per radian): <span id="gain-readout">–</span>
+          <input type="range" id="gain" min="1000" max="9000" step="100" value="4000" />
+        </label>
+        <label class="invert">
+          <input type="checkbox" id="invert_yaw" /> Invert horizontal (if turning left moves the cursor right)
+        </label>
+        <label class="invert">
+          <input type="checkbox" id="invert_pitch" /> Invert vertical (if looking up moves the cursor down)
+        </label>
+        <div id="preview-stage-wrap">
+          <canvas id="preview-stage" width="480" height="270"></canvas>
+          <p class="hint">Live cursor preview (head-driven). Center = neutral pose.</p>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button id="start-btn" disabled>Start head-pointing task</button>
+        <span id="landing-status" class="status"></span>
+      </div>
+      <p class="hint">Task: drive the cursor into each target and <b>hold</b> until it
+         locks. The gain is swept around your setting to test robustness.
+         <kbd>Esc</kbd> aborts. &middot; <a href="/">Gaze calibration &rarr;</a></p>
+    </div>
+  </section>
+
+  <!-- ============ Fullscreen task ============ -->
+  <section id="task" class="screen">
+    <canvas id="stage"></canvas>
+    <div id="phase-hud" class="hud"></div>
+    <div id="hint-hud" class="hud hud-bottom">drive the cursor into the target &middot; hold to lock &middot; Esc = abort</div>
+  </section>
+
+  <!-- ============ Results ============ -->
+  <section id="results" class="screen">
+    <div class="card">
+      <h1>Results</h1>
+      <p id="verdict" class="verdict"></p>
+      <div id="metrics-tables"></div>
+      <p id="results-meta" class="hint"></p>
+      <div class="actions">
+        <button id="again-btn">Run again</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Overlay (loading / errors) ============ -->
+  <div id="overlay" class="overlay hidden"><div class="overlay-box"><span id="overlay-msg"></span></div></div>
+
+  <script type="module" src="/static/headpoint.js"></script>
+</body>
+</html>

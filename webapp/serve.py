@@ -54,6 +54,13 @@ SPLITS_YAML = os.path.join(EXP, "splits.yaml")
 ANALYZE_PY = os.path.join(EXP, "analyze.py")
 METRICS_JSON = os.path.join(EXP, "metrics.json")
 
+# --- Second experiment: closed-loop head-pointing (2026-07-08) ---------------
+EXP2 = os.path.join(ROOT, "experiments", "2026-07-08-head-pointing-closed-loop")
+RESULTS2_DIR = os.path.join(EXP2, "results")
+CONFIG2_YAML = os.path.join(EXP2, "config.yaml")
+ANALYZE2_PY = os.path.join(EXP2, "analyze_headpoint.py")
+METRICS2_JSON = os.path.join(EXP2, "metrics.json")
+
 _VALID_PHASES = ("calibration", "validation", "test")
 
 app = FastAPI(title="hfc-webcam-gaze-collector")
@@ -87,6 +94,40 @@ class SessionBody(BaseModel):
 
 
 class AnalyzeBody(BaseModel):
+    session_id: str
+
+
+# --- Head-pointing (closed-loop) request models ------------------------------
+class HeadpointMeta(BaseModel):
+    screen_px: List[float]
+    screen_mm: List[float]
+    viewing_distance_mm: float
+    camera: List[float]
+    chosen_gain_px_per_rad: float
+    smoothing_alpha: float = 0.5
+    invert_pitch: bool = False
+    neutral: Dict[str, float] = {}
+    user_agent: str = ""
+
+
+class Trial(BaseModel):
+    gain_mult: float
+    gain_px_per_rad: float
+    target_norm: List[float]
+    target_radius_px: float
+    prev_norm: Optional[List[float]] = None
+    outcome: str
+    t_appear_ms: float
+    t_acquire_ms: Optional[float] = None
+    samples: List[List[float]]
+
+
+class HeadpointSessionBody(BaseModel):
+    meta: HeadpointMeta
+    trials: List[Trial]
+
+
+class HeadpointAnalyzeBody(BaseModel):
     session_id: str
 
 
@@ -214,6 +255,103 @@ def api_analyze(body: AnalyzeBody) -> JSONResponse:
     if not os.path.isfile(METRICS_JSON):
         raise HTTPException(status_code=500, detail="metrics.json not produced")
     with open(METRICS_JSON, "r", encoding="utf-8") as fh:
+        metrics = json.load(fh)
+    return JSONResponse(metrics)
+
+
+# --- Head-pointing (closed-loop) endpoints -----------------------------------
+@app.get("/headpoint")
+def headpoint_index() -> FileResponse:
+    return FileResponse(os.path.join(STATIC_DIR, "headpoint.html"))
+
+
+@app.get("/api/headpoint_config")
+def api_headpoint_config() -> dict:
+    """Task params (targets, dwell, control, gain sweep) + screen defaults for the UI."""
+    cfg = _load_yaml(CONFIG2_YAML)
+    screen = cfg.get("screen", {})
+    return {
+        "targets": cfg.get("task", {}).get("targets", []),
+        "timeout_ms": cfg.get("task", {}).get("timeout_ms", 8000),
+        "dwell_ms": cfg.get("dwell", {}).get("dwell_ms", 600),
+        "control": cfg.get("control", {}),
+        "gain_multipliers": cfg.get("robustness", {}).get("gain_multipliers", [1.0]),
+        "screen_defaults": {
+            "width_mm": screen.get("width_mm"),
+            "height_mm": screen.get("height_mm"),
+            "viewing_distance_mm": cfg.get("viewing_distance_mm"),
+        },
+    }
+
+
+@app.post("/api/headpoint_session")
+def api_headpoint_session(body: HeadpointSessionBody) -> dict:
+    """Persist a closed-loop head-pointing session -> results/hpsession_web_<ts>/trials.jsonl."""
+    if not body.trials:
+        raise HTTPException(status_code=400, detail="no trials in session")
+
+    ts = _dt.datetime.now().strftime("%Y%m%d-%H%M%S")
+    session_id = f"hpsession_web_{ts}"
+    session_dir = os.path.join(RESULTS2_DIR, session_id)
+    suffix = 0
+    while os.path.exists(session_dir):
+        suffix += 1
+        session_id = f"hpsession_web_{ts}-{suffix}"
+        session_dir = os.path.join(RESULTS2_DIR, session_id)
+    os.makedirs(session_dir, exist_ok=False)
+
+    with open(os.path.join(session_dir, "trials.jsonl"), "w", encoding="utf-8") as fh:
+        for tr in body.trials:
+            fh.write(json.dumps(tr.model_dump()) + "\n")
+
+    meta_out = {
+        "screen_px": [float(body.meta.screen_px[0]), float(body.meta.screen_px[1])],
+        "screen_mm": [float(body.meta.screen_mm[0]), float(body.meta.screen_mm[1])],
+        "viewing_distance_mm": float(body.meta.viewing_distance_mm),
+        "camera": [float(body.meta.camera[0]), float(body.meta.camera[1])],
+        "chosen_gain_px_per_rad": float(body.meta.chosen_gain_px_per_rad),
+        "smoothing_alpha": float(body.meta.smoothing_alpha),
+        "invert_pitch": bool(body.meta.invert_pitch),
+        "neutral": {k: float(v) for k, v in body.meta.neutral.items()},
+        "user_agent": body.meta.user_agent,
+        "generated": _dt.datetime.now().isoformat(timespec="seconds"),
+        "source": "webapp",
+    }
+    with open(os.path.join(session_dir, "meta.json"), "w", encoding="utf-8") as fh:
+        json.dump(meta_out, fh, indent=2)
+        fh.write("\n")
+
+    return {"session_id": session_id, "n_trials": len(body.trials)}
+
+
+@app.post("/api/headpoint_analyze")
+def api_headpoint_analyze(body: HeadpointAnalyzeBody) -> JSONResponse:
+    """Score a stored head-pointing session via analyze_headpoint.py."""
+    session_id = body.session_id
+    if not session_id or os.path.basename(session_id) != session_id:
+        raise HTTPException(status_code=400, detail="invalid session_id")
+    session_dir = os.path.join(RESULTS2_DIR, session_id)
+    if not os.path.isdir(session_dir):
+        raise HTTPException(status_code=404, detail=f"session not found: {session_id}")
+
+    cmd = [
+        UV_BIN, "run", "--project", EXP2,
+        "python", ANALYZE2_PY,
+        "--session", session_dir,
+    ]
+    try:
+        proc = subprocess.run(cmd, cwd=EXP2, capture_output=True, text=True, timeout=180)
+    except subprocess.TimeoutExpired:
+        raise HTTPException(status_code=500, detail="analyze_headpoint.py timed out")
+    if proc.returncode != 0:
+        raise HTTPException(
+            status_code=500,
+            detail=f"analyze_headpoint.py failed (rc={proc.returncode}): "
+            f"{(proc.stderr or proc.stdout)[-800:]}",
+        )
+    if not os.path.isfile(METRICS2_JSON):
+        raise HTTPException(status_code=500, detail="metrics.json not produced")
+    with open(METRICS2_JSON, "r", encoding="utf-8") as fh:
         metrics = json.load(fh)
     return JSONResponse(metrics)
 
