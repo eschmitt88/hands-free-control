@@ -4,7 +4,7 @@ slug: "head-pointing-closed-loop"
 date: "2026-07-08"
 status: running     # running | done | abandoned
 hypothesis: "With a visible cursor driven by head pose, closed-loop feedback lets the user acquire and settle on on-screen targets reliably (>90% success, sub-cm settling) even when the head->cursor gain ('size' calibration) is only roughly set — because the user corrects in real time. Acquisition time is the cost, not accuracy. This is the opposite regime from the open-loop head-pose number in 2026-07-01-webcam-gaze-accuracy (22.9 deg), which measured head pose during a head-still gaze task and is not a controllability result."
-result: "First session (under accidentally-swapped axes): 100% target acquisition across a ±40% gain sweep, 0.25 deg (0.28 cm) settling, 3.25 s/target acquisition (inflated by the cross-wiring). Closed-loop control forgives coarse calibration; speed is the cost. Axis swap fixed; clean re-run pending."
+result: "First session (un-tuned EMA smoother; directionality correct via both invert toggles): 100% target acquisition across a ±40% gain sweep, 0.25 deg (0.28 cm) settling, 3.25 s/target (slow, traced to cursor wobble). Closed-loop control forgives coarse calibration; speed is the cost. Added a One-Euro filter + live tuning sandbox to cut wobble; tuned re-run pending."
 related_concepts: [head-pose-pointing, camera-mouse, eviacam, closed-loop-control, gain-calibration, dwell-click, area-cursor, gaze-head-pointing]
 related_literature: [camera-mouse, eviacam]
 tags: [head-pose, closed-loop, control, pointing, measurement]
@@ -85,14 +85,15 @@ method against this task, it must introduce a split then (and an ADR).
 
 ## Result
 
-First real session (`hpsession_web_20260708-151320`, `metrics.json`), **collected
-under cross-wired axes** — the horizontal/vertical head→cursor mapping was swapped
-for this run (fixed afterward in `webapp/static/headpoint.js`), so the user was
-fighting a control where turning the head moved the cursor vertically. Even so:
+First real session (`hpsession_web_20260708-151320`, `metrics.json`).
+**Directionality was correct** — the user enabled both invert toggles (only the
+axis *signs* were flipped, not the axes themselves), so the mapping was sound.
+The run used the pre-filter EMA smoother (no One-Euro filter, no deadzone); the
+user reported cursor **wobble** and found the task challenging. Results:
 
 - **success_rate = 1.0** — all 30 targets acquired, across every gain (×0.6/×1.0/×1.4).
 - **median settling = 0.25° (0.28 cm)** — sub-cm steadiness held through the dwell.
-- **median acquisition = 3.25 s** — the cost; inflated by the cross-wiring.
+- **median acquisition = 3.25 s** — the cost (slow; traced to wobble, not miscontrol).
 - **mean overshoot = 0.93**, **path efficiency = 0.75**, **throughput = 1.1 bits/s**.
 - **Gain robustness:** 100% success at all three gains; acquisition *fell* with
   higher gain (3.67→3.36→2.67 s for ×0.6→×1.0→×1.4) and throughput rose
@@ -101,41 +102,41 @@ fighting a control where turning the head moved the cursor vertically. Even so:
 
 ## Interpretation
 
-The core hypothesis holds, and the accidental cross-wiring made the test *harder*,
-so these numbers are a conservative floor:
+The core hypothesis holds. These numbers come from the **un-tuned** setup (EMA
+smoother, no filter/deadzone), so speed in particular should improve with tuning:
 
 - **Closed-loop control forgives coarse calibration — strongly.** 100% acquisition
-  under a ±40% gain sweep *and* a swapped-axis handicap is the headline. The head
-  channel does not need a precise calibration; a gain slider the user eyeballs is
-  enough, exactly as predicted.
+  under a ±40% gain sweep is the headline. The head channel does not need a precise
+  calibration; a gain slider the user eyeballs is enough, exactly as predicted.
 - **The precision payoff is real.** 0.25° settling is ~20× tighter than open-loop
   gaze (`../2026-07-01-webcam-gaze-accuracy/metrics.json`: gaze median 5.56°). Head
   fine-adjustment can hold well inside any button.
 - **Speed is the cost, and it's the thing to improve.** 3.25 s/target is slow (a
-  mouse is sub-second) and was worsened by the cross-wiring; the corrected mapping
-  should cut it. Higher gain helped speed here with no accuracy penalty, so the
+  mouse is sub-second). Higher gain helped speed with no accuracy penalty, so the
   operating point likely sits at or above the user's chosen gain.
-- **User-reported difficulty** ("challenging") is consistent with fighting swapped
-  axes; a corrected re-run is the clean measurement.
+- **User-reported difficulty** ("challenging") + wobble trace to the pre-filter EMA
+  smoother and zero deadzone. In response, a **One-Euro filter** and a **live tuning
+  sandbox** (gain / steadiness / responsiveness / deadzone, with a wobble readout)
+  were added so the user can dial in the feel before the next scored run; `meta.tune`
+  records the settings used per session.
 
 ## Diagnostics
 
-- intended_effect_confirmed: yes — closed-loop acquisition succeeded 100% across
-  a ±40% gain sweep even under swapped axes (`metrics.json:by_gain.*.success_rate`
-  all 1.0); settling 0.25° (`metrics.json:overall.median_settle_deg`).
+- intended_effect_confirmed: yes — closed-loop acquisition succeeded 100% across a
+  ±40% gain sweep (`metrics.json:by_gain.*.success_rate` all 1.0) with 0.25° settling
+  (`metrics.json:overall.median_settle_deg`), on the un-tuned EMA smoother.
 - leakage_check: n/a (behavioral task, no train/test split)
 - overfitting_signal: n/a (no fitted model; gain is a live user control)
 - delta_from_prior: vs 2026-07-01-webcam-gaze-accuracy head-pose — reframes the
   22.9° open-loop artifact as a closed-loop result: settling 0.25° vs gaze median
   5.56° open-loop, i.e. ~20× tighter with a visible cursor (`metrics.json`).
-- unexpected_findings: the run was collected with horizontal/vertical swapped
-  (MediaPipe forward-vector components m8/m9 map to the opposite screen axes than
-  the naive column assignment); 100% success *despite* that is itself the strongest
-  evidence for the closed-loop-forgiveness claim. Higher gain improved speed with
-  no accuracy loss (no instability at ×1.4).
+- unexpected_findings: higher gain improved speed with no accuracy loss and no
+  instability at ×1.4 — opposite the synthetic sloppy controller, i.e. the human
+  adapts. Acquisition (3.25 s) is slow and traces to pre-filter cursor wobble, which
+  motivated the One-Euro filter + tuning sandbox rather than any mapping change.
 - next_candidates:
-  - Re-run with the corrected (un-swapped) axis mapping to get a clean acquisition-
-    time baseline and test whether it drops below ~2 s/target.
+  - Re-run after tuning (One-Euro steadiness/responsiveness + deadzone) and test
+    whether median acquisition drops below ~2 s/target at fixed settling.
   - Add element-latching (snap-to-nearest-target / area cursor) on top of the head
     cursor and measure the acquisition-time reduction it buys at fixed settling.
 
