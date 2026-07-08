@@ -106,9 +106,16 @@ function extractHead(res) {
   const m = mats[0].data;
   const R00 = m[0], R10 = m[1], R20 = m[2], R21 = m[6], R22 = m[10];
   const sy = Math.hypot(R00, R10);
-  const pitch = Math.atan2(-R20, sy);
-  const yaw = Math.atan2(R10, R00);
-  const roll = Math.atan2(R21, R22);
+  // Map each Euler angle to the head motion that should drive that cursor axis.
+  // MediaPipe's face transform frame is ~ X=right, Y=up, Z=out-of-face, so:
+  //   yaw   = rotation about Y (up axis)   = turning head left/right -> cursor X
+  //   pitch = rotation about X (right axis)= nodding up/down          -> cursor Y
+  //   roll  = rotation about Z (optical)   = head tilt (NOT used for the cursor)
+  // The earlier build bound cursor X to the Z-axis (roll/tilt) angle, which
+  // barely changes when you turn your head — hence "only up/down moved".
+  const yaw = Math.atan2(-R20, sy);     // horizontal (head turn)
+  const pitch = Math.atan2(R21, R22);   // vertical (nod)
+  const roll = Math.atan2(R10, R00);    // tilt (unused for pointing)
   if (![yaw, pitch, roll].every(Number.isFinite)) return null;
   return { yaw, pitch, roll };
 }
