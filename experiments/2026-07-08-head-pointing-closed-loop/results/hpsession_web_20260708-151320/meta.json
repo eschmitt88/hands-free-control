@@ -1,0 +1,25 @@
+{
+  "screen_px": [
+    1920.0,
+    1080.0
+  ],
+  "screen_mm": [
+    598.0,
+    336.0
+  ],
+  "viewing_distance_mm": 650.0,
+  "camera": [
+    1280.0,
+    720.0
+  ],
+  "chosen_gain_px_per_rad": 4000.0,
+  "smoothing_alpha": 0.5,
+  "invert_pitch": true,
+  "neutral": {
+    "yaw": 0.09124887852410224,
+    "pitch": -0.07732286938991006
+  },
+  "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36",
+  "generated": "2026-07-08T15:13:20",
+  "source": "webapp"
+}

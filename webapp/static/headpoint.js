@@ -119,8 +119,11 @@ function extractHead(res) {
   if (!mats || !mats.length || !mats[0].data || mats[0].data.length < 16) return null;
   const m = mats[0].data;
   const fx = m[8], fy = m[9], fz = m[10];   // head-forward direction in world space
-  const yaw = Math.atan2(fx, fz);           // horizontal (turn left/right)
-  const pitch = Math.atan2(fy, fz);         // vertical (nod up/down)
+  // Empirically confirmed via the live readout: in MediaPipe's matrix layout,
+  // turning the head left/right swings m9, and nodding swings m8 — the opposite
+  // of the naive column assignment. So horizontal uses fy, vertical uses fx.
+  const yaw = Math.atan2(fy, fz);           // horizontal (turn left/right)
+  const pitch = Math.atan2(fx, fz);         // vertical (nod up/down)
   const roll = Math.atan2(m[1], m[0]);      // in-plane tilt (unused for pointing)
   if (![yaw, pitch, roll].every(Number.isFinite)) return null;
   return { yaw, pitch, roll };
