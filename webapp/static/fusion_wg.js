@@ -82,9 +82,9 @@ async function initWebGazer() {
 // Tunables + filter (identical to fusion.js)
 // ============================================================
 const TUNE = { gain: 1000, minCutoff: 1.0, beta: 0.007, deadzone: 0 };
-const GATES = { reanchorDeg: 6.0, headQuietDegps: 8.0, fixationMs: 100, gazeSettleDegps: 25.0 };
-const TUNE_MIN = { gain: 400, minCutoff: 0.3, beta: 0, deadzone: 0, reanchorDeg: 2, headQuietDegps: 2, fixationMs: 0 };
-const TUNE_MAX = { gain: 12000, minCutoff: 6, beta: 0.05, deadzone: 40, reanchorDeg: 20, headQuietDegps: 30, fixationMs: 400 };
+const GATES = { reanchorDeg: 6.0, headQuietDegps: 8.0, fixationMs: 100, gazeSettleDegps: 25.0, headNearDeg: 8.0 };
+const TUNE_MIN = { gain: 400, minCutoff: 0.3, beta: 0, deadzone: 0, reanchorDeg: 2, headQuietDegps: 2, fixationMs: 0, headNearDeg: 2 };
+const TUNE_MAX = { gain: 12000, minCutoff: 6, beta: 0.05, deadzone: 40, reanchorDeg: 20, headQuietDegps: 30, fixationMs: 400, headNearDeg: 30 };
 function loadTune() { try { const s = JSON.parse(localStorage.getItem("fusion_tune") || "{}"); Object.assign(TUNE, s.tune || {}); Object.assign(GATES, s.gates || {}); } catch { /* ignore */ } }
 function saveTune() { try { localStorage.setItem("fusion_tune", JSON.stringify({ tune: TUNE, gates: GATES })); } catch { /* ignore */ } }
 class OneEuro {
@@ -207,13 +207,17 @@ function fusionLoop() {
   const gazeSettled = st.gazeSettleSince != null && (now - st.gazeSettleSince) >= GATES.fixationMs;
 
   const headQuiet = headSpeed < GATES.headQuietDegps;
+  // Gaze is only valid near the calibration head pose — trust it only there.
+  const headNear = rawHead ? (Math.hypot(rawHead.yaw - neutral.yaw, rawHead.pitch - neutral.pitch) * 180 / Math.PI < GATES.headNearDeg) : false;
   const distDeg = gazePt ? Math.hypot(gazePt[0] - st.cursor[0], gazePt[1] - st.cursor[1]) * st.dpp : 0;
+  const wantWarp = gazePt && headQuiet && distDeg > GATES.reanchorDeg;
   let mode = "FINE (head)";
   if (rawHead && !headQuiet) { mode = "FINE (head)"; }
-  else if (gazePt && headQuiet && distDeg > GATES.reanchorDeg && gazeSettled) {
+  else if (wantWarp && headNear && gazeSettled) {
     st.anchor = [gazePt[0], gazePt[1]]; st.headNeutral = rawHead ? { ...rawHead } : st.headNeutral; resetHeadFilters();
     st.reanchors += 1; st.events.push({ t: Math.round(tRel), type: "warp", to: [Math.round(gazePt[0]), Math.round(gazePt[1])] }); mode = "WARP →";
-  } else if (gazePt && headQuiet && distDeg > GATES.reanchorDeg) { mode = "WARP-ARMED"; }
+  } else if (wantWarp && !headNear) { mode = "RE-AIM · center head"; }   // gaze untrusted (head displaced)
+  else if (wantWarp) { mode = "WARP-ARMED"; }
 
   let off = [0, 0];
   if (rawHead) { const fy = filtYaw.filter(rawHead.yaw, now), fp = filtPitch.filter(rawHead.pitch, now); off = [(invertYaw() ? -1 : 1) * TUNE.gain * (fy - st.headNeutral.yaw), (invertPitch() ? -1 : 1) * TUNE.gain * (fp - st.headNeutral.pitch)]; }
@@ -275,6 +279,7 @@ function refreshTunePanel() {
   $("t-red").value = GATES.reanchorDeg; $("t-red-val").textContent = GATES.reanchorDeg;
   $("t-hq").value = GATES.headQuietDegps; $("t-hq-val").textContent = GATES.headQuietDegps;
   $("t-fix").value = GATES.fixationMs; $("t-fix-val").textContent = GATES.fixationMs;
+  $("t-hn").value = GATES.headNearDeg; $("t-hn-val").textContent = GATES.headNearDeg;
   if ($("gain")) { $("gain").value = TUNE.gain; $("gain-readout").textContent = Math.round(TUNE.gain); }
 }
 function wireTunePanel() {
@@ -285,6 +290,7 @@ function wireTunePanel() {
   $("t-red").addEventListener("input", (e) => { GATES.reanchorDeg = +e.target.value; saveTune(); refreshTunePanel(); });
   $("t-hq").addEventListener("input", (e) => { GATES.headQuietDegps = +e.target.value; saveTune(); refreshTunePanel(); });
   $("t-fix").addEventListener("input", (e) => { GATES.fixationMs = +e.target.value; saveTune(); refreshTunePanel(); });
+  $("t-hn").addEventListener("input", (e) => { GATES.headNearDeg = +e.target.value; saveTune(); refreshTunePanel(); });
 }
 function tuneStep(obj, p, d, lo, hi) { obj[p] = Math.max(lo, Math.min(hi, obj[p] + d)); saveTune(); refreshTunePanel(); }
 
@@ -303,6 +309,7 @@ async function init() {
     headQuietDegps: CFG.fusion?.head_quiet_degps ?? GATES.headQuietDegps,
     fixationMs: CFG.fusion?.fixation_ms ?? GATES.fixationMs,
     gazeSettleDegps: CFG.fusion?.gaze_settle_degps ?? GATES.gazeSettleDegps,
+    headNearDeg: CFG.fusion?.head_near_deg ?? GATES.headNearDeg,
   });
   loadTune(); wireTunePanel(); refreshTunePanel(); prefillGeometry();
 
