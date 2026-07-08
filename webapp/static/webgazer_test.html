@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>WebGazer vs our gaze — discriminating test</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <section id="landing" class="screen active">
+    <div class="card">
+      <h1>WebGazer yardstick <span class="hint">is it our code, or the webcam?</span></h1>
+      <p class="lede">
+        Runs the mature <b>WebGazer.js</b> library through the <b>same</b> 9-point
+        calibration + validation grid our own gaze estimator used, and reports the
+        error side-by-side. If WebGazer is also poor here, the limit is the webcam
+        (→ hardware). If it's clearly better, our implementation is the gap (→ software).
+      </p>
+      <form id="geom-form" class="geom">
+        <h2>Screen geometry</h2>
+        <label>Screen width (mm)<input type="number" id="width_mm" step="1" min="1" required /></label>
+        <label>Screen height (mm)<input type="number" id="height_mm" step="1" min="1" required /></label>
+        <fieldset class="diag">
+          <legend>Diagonal helper (optional)</legend>
+          <label>Diagonal (inches)<input type="number" id="diag_in" step="0.1" min="1" placeholder="e.g. 27" /></label>
+          <button type="button" id="diag-apply" class="ghost">Fill W/H from diagonal</button>
+        </fieldset>
+        <label>Viewing distance (cm)<input type="number" id="viewing_cm" step="1" min="1" required /></label>
+      </form>
+      <div class="actions">
+        <button id="start-btn">Start WebGazer test</button>
+        <span id="landing-status" class="status"></span>
+      </div>
+      <p class="hint">Calibration: look at each dot &amp; it fills. Then validation dots, then a
+         free-look so you can eyeball the jumpiness. <kbd>Esc</kbd> aborts. &middot;
+         <a href="/fusion">Fusion &rarr;</a></p>
+    </div>
+  </section>
+
+  <section id="stage-screen" class="screen">
+    <canvas id="stage"></canvas>
+    <div id="phase-hud" class="hud"></div>
+    <div id="hint-hud" class="hud hud-bottom"></div>
+  </section>
+
+  <section id="results" class="screen">
+    <div class="card">
+      <h1>WebGazer vs ours</h1>
+      <div id="cmp-table"></div>
+      <p id="verdict" class="verdict"></p>
+      <p id="results-meta" class="hint"></p>
+      <div class="actions"><button id="again-btn">Run again</button></div>
+    </div>
+  </section>
+
+  <div id="overlay" class="overlay hidden"><div class="overlay-box"><span id="overlay-msg"></span></div></div>
+
+  <script src="/static/vendor/webgazer.js"></script>
+  <script type="module" src="/static/webgazer_test.js?v=1"></script>
+</body>
+</html>
