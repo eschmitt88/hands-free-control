@@ -64,10 +64,10 @@
           <input type="range" id="gain" min="1000" max="9000" step="100" value="4000" />
         </label>
         <label class="invert">
-          <input type="checkbox" id="invert_yaw" /> Invert horizontal (if turning left moves the cursor right)
+          <input type="checkbox" id="invert_yaw" checked /> Invert horizontal (if turning left moves the cursor right)
         </label>
         <label class="invert">
-          <input type="checkbox" id="invert_pitch" /> Invert vertical (if looking up moves the cursor down)
+          <input type="checkbox" id="invert_pitch" checked /> Invert vertical (if looking up moves the cursor down)
         </label>
         <div id="preview-stage-wrap">
           <canvas id="preview-stage" width="480" height="270"></canvas>
@@ -81,13 +81,22 @@
       </div>
 
       <div class="actions">
+        <button id="sandbox-btn" class="ghost" disabled>Tuning sandbox (free play)</button>
         <button id="start-btn" disabled>Start head-pointing task</button>
         <span id="landing-status" class="status"></span>
       </div>
-      <p class="hint">Task: drive the cursor into each target and <b>hold</b> until it
-         locks. The gain is swept around your setting to test robustness.
-         <kbd>Esc</kbd> aborts. &middot; <a href="/">Gaze calibration &rarr;</a></p>
+      <p class="hint"><b>Tuning sandbox</b> = a free-play cursor + practice targets with
+         live sliders (gain, steadiness, responsiveness, deadzone) so you can dial in
+         the feel and a wobble readout, then run the scored task.
+         Task: drive the cursor into each target and <b>hold</b> until it locks; gain is
+         swept around your setting. <kbd>Esc</kbd> exits. &middot; <a href="/">Gaze calibration &rarr;</a></p>
     </div>
+  </section>
+
+  <!-- ============ Fullscreen tuning sandbox ============ -->
+  <section id="sandbox" class="screen">
+    <canvas id="sandbox-stage"></canvas>
+    <div id="sandbox-hud" class="hud hud-bottom">free play &middot; tune the feel &middot; Esc = done</div>
   </section>
 
   <!-- ============ Fullscreen task ============ -->
@@ -96,6 +105,22 @@
     <div id="phase-hud" class="hud"></div>
     <div id="hint-hud" class="hud hud-bottom">drive the cursor into the target &middot; hold to lock &middot; Esc = abort</div>
   </section>
+
+  <!-- ============ Live tuning panel (shown in sandbox + task) ============ -->
+  <div id="tune-panel" class="tune-panel hidden">
+    <h3>Tuning <span class="hint">drag, or use keys</span></h3>
+    <label>Gain <span id="t-gain-val"></span>
+      <input type="range" id="t-gain" min="1000" max="12000" step="100" /></label>
+    <label>Steadiness <span id="t-steady-val"></span>
+      <input type="range" id="t-steady" min="0" max="100" step="1" /></label>
+    <label>Responsiveness <span id="t-beta-val"></span>
+      <input type="range" id="t-beta" min="0" max="0.05" step="0.001" /></label>
+    <label>Deadzone (px) <span id="t-dz-val"></span>
+      <input type="range" id="t-dz" min="0" max="40" step="1" /></label>
+    <p class="hint" id="t-wobble">wobble: —</p>
+    <p class="hint">keys: <kbd>[</kbd><kbd>]</kbd> gain · <kbd>-</kbd><kbd>=</kbd> steady ·
+       <kbd>;</kbd><kbd>'</kbd> resp · <kbd>,</kbd><kbd>.</kbd> deadzone</p>
+  </div>
 
   <!-- ============ Results ============ -->
   <section id="results" class="screen">
@@ -113,6 +138,6 @@
   <!-- ============ Overlay (loading / errors) ============ -->
   <div id="overlay" class="overlay hidden"><div class="overlay-box"><span id="overlay-msg"></span></div></div>
 
-  <script type="module" src="/static/headpoint.js?v=4"></script>
+  <script type="module" src="/static/headpoint.js?v=5"></script>
 </body>
 </html>

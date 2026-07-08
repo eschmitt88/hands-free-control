@@ -27,7 +27,8 @@ const VENDOR_MODEL = "/static/vendor/models/face_landmarker.task";
 
 // ---- DOM ----
 const $ = (id) => document.getElementById(id);
-const screens = { landing: $("landing"), task: $("task"), results: $("results") };
+const screens = { landing: $("landing"), sandbox: $("sandbox"), task: $("task"), results: $("results") };
+function showTunePanel(on) { $("tune-panel").classList.toggle("hidden", !on); }
 function show(name) {
   for (const [k, el] of Object.entries(screens)) el.classList.toggle("active", k === name);
 }
@@ -44,7 +45,6 @@ const video = $("preview");
 let lastTs = 0;
 
 let neutral = null;           // {yaw, pitch} captured neutral pose
-let smoothHead = null;        // EMA-smoothed {yaw, pitch}
 let previewLoop = null;
 
 // ============================================================
@@ -119,41 +119,92 @@ function extractHead(res) {
   if (!mats || !mats.length || !mats[0].data || mats[0].data.length < 16) return null;
   const m = mats[0].data;
   const fx = m[8], fy = m[9], fz = m[10];   // head-forward direction in world space
-  // Empirically confirmed via the live readout: in MediaPipe's matrix layout,
-  // turning the head left/right swings m9, and nodding swings m8 — the opposite
-  // of the naive column assignment. So horizontal uses fy, vertical uses fx.
-  const yaw = Math.atan2(fy, fz);           // horizontal (turn left/right)
-  const pitch = Math.atan2(fx, fz);         // vertical (nod up/down)
+  // Axes are correct as-is (confirmed by the user: correct once BOTH invert
+  // toggles were on — i.e. only the signs were flipped, not the axes). Horizontal
+  // = fx (turning swings the forward vector sideways), vertical = fy (nodding).
+  const yaw = Math.atan2(fx, fz);           // horizontal (turn left/right)
+  const pitch = Math.atan2(fy, fz);         // vertical (nod up/down)
   const roll = Math.atan2(m[1], m[0]);      // in-plane tilt (unused for pointing)
   if (![yaw, pitch, roll].every(Number.isFinite)) return null;
   return { yaw, pitch, roll };
 }
 
 // ============================================================
+// Live-tunable levers (persisted; adjustable during the task/sandbox)
+// ============================================================
+const TUNE = {
+  gain: 4000,        // px per radian of head rotation
+  minCutoff: 1.0,    // One-Euro min cutoff (Hz): LOWER = smoother/steadier at rest
+  beta: 0.007,       // One-Euro speed coefficient: HIGHER = less lag when moving fast
+  deadzone: 0,       // px: freeze cursor until head moves it past this radius (kills micro-wobble)
+};
+function loadTune() {
+  try { Object.assign(TUNE, JSON.parse(localStorage.getItem("hp_tune") || "{}")); } catch { /* ignore */ }
+}
+function saveTune() {
+  try { localStorage.setItem("hp_tune", JSON.stringify(TUNE)); } catch { /* ignore */ }
+}
+
+// One-Euro filter (Casiez et al. 2012): adaptive low-pass — smooth when still,
+// responsive when moving. Far better than a fixed EMA for pointer wobble.
+class OneEuro {
+  constructor(minCutoff, beta, dCutoff = 1.0) {
+    this.minCutoff = minCutoff; this.beta = beta; this.dCutoff = dCutoff;
+    this.xPrev = null; this.dxPrev = 0; this.tPrev = null;
+  }
+  reset() { this.xPrev = null; this.dxPrev = 0; this.tPrev = null; }
+  _alpha(cutoff, dt) { const tau = 1 / (2 * Math.PI * cutoff); return 1 / (1 + tau / dt); }
+  filter(x, tMs) {
+    if (this.xPrev === null) { this.xPrev = x; this.tPrev = tMs; return x; }
+    let dt = (tMs - this.tPrev) / 1000; if (!(dt > 0)) dt = 1 / 60;
+    this.tPrev = tMs;
+    const dx = (x - this.xPrev) / dt;
+    const aD = this._alpha(this.dCutoff, dt);
+    const edx = aD * dx + (1 - aD) * this.dxPrev; this.dxPrev = edx;
+    const cutoff = this.minCutoff + this.beta * Math.abs(edx);
+    const a = this._alpha(cutoff, dt);
+    const xf = a * x + (1 - a) * this.xPrev; this.xPrev = xf;
+    return xf;
+  }
+}
+let filtYaw = null, filtPitch = null, heldCursor = null;
+function resetFilters() {
+  filtYaw = new OneEuro(TUNE.minCutoff, TUNE.beta);
+  filtPitch = new OneEuro(TUNE.minCutoff, TUNE.beta);
+  heldCursor = null;
+}
+
+// ============================================================
 // Cursor mapping
 // ============================================================
-function currentGain() { return parseFloat($("gain").value) || 4000; }
+function currentGain() { return TUNE.gain; }
 function invertYaw() { return $("invert_yaw").checked; }
 function invertPitch() { return $("invert_pitch").checked; }
 
+function applyDeadzone(cx, cy) {
+  if (TUNE.deadzone <= 0) { heldCursor = [cx, cy]; return [cx, cy]; }
+  if (!heldCursor) heldCursor = [cx, cy];
+  if (Math.hypot(cx - heldCursor[0], cy - heldCursor[1]) > TUNE.deadzone) heldCursor = [cx, cy];
+  return heldCursor;
+}
+
 function headToCursor(head, W, H, gain) {
-  // Relative to neutral pose, scaled by gain; EMA-smoothed upstream.
+  // Relative to neutral pose, scaled by gain; One-Euro-filtered upstream.
   const n = neutral || { yaw: head.yaw, pitch: head.pitch };
   const sx = invertYaw() ? -1 : 1;
   const sy = invertPitch() ? -1 : 1;
-  const cx = W / 2 + sx * gain * (head.yaw - n.yaw);
-  const cy = H / 2 + sy * gain * (head.pitch - n.pitch);
+  let cx = W / 2 + sx * gain * (head.yaw - n.yaw);
+  let cy = H / 2 + sy * gain * (head.pitch - n.pitch);
+  [cx, cy] = applyDeadzone(cx, cy);
   return [Math.max(0, Math.min(W, cx)), Math.max(0, Math.min(H, cy))];
 }
 
-function smooth(head) {
-  const a = (CFG.control && CFG.control.smoothing_alpha) || 0.5;
-  if (!smoothHead) smoothHead = { yaw: head.yaw, pitch: head.pitch };
-  else {
-    smoothHead.yaw = a * head.yaw + (1 - a) * smoothHead.yaw;
-    smoothHead.pitch = a * head.pitch + (1 - a) * smoothHead.pitch;
-  }
-  return smoothHead;
+function smooth(head, tMs) {
+  if (!filtYaw) resetFilters();
+  filtYaw.minCutoff = TUNE.minCutoff; filtYaw.beta = TUNE.beta;
+  filtPitch.minCutoff = TUNE.minCutoff; filtPitch.beta = TUNE.beta;
+  const t = tMs == null ? performance.now() : tMs;
+  return { yaw: filtYaw.filter(head.yaw, t), pitch: filtPitch.filter(head.pitch, t), roll: head.roll };
 }
 
 // ============================================================
@@ -220,6 +271,7 @@ function startPreview() {
         `(fwd x=${raw.fx.toFixed(2)} y=${raw.fy.toFixed(2)} z=${raw.fz.toFixed(2)})`;
     }
     $("start-btn").disabled = !readyToStart();
+    $("sandbox-btn").disabled = !neutral;
     previewLoop = requestAnimationFrame(tick);
   };
   previewLoop = requestAnimationFrame(tick);
@@ -244,8 +296,91 @@ async function captureNeutral() {
     yaw: samples.reduce((s, h) => s + h.yaw, 0) / samples.length,
     pitch: samples.reduce((s, h) => s + h.pitch, 0) / samples.length,
   };
-  smoothHead = { yaw: neutral.yaw, pitch: neutral.pitch };
+  resetFilters();
   $("neutral-status").textContent = "captured ✓";
+}
+
+// ============================================================
+// Live tuning panel (shown in sandbox + task; drag sliders or use keys)
+// ============================================================
+const TUNE_MIN = { gain: 1000, minCutoff: 0.3, beta: 0, deadzone: 0 };
+const TUNE_MAX = { gain: 12000, minCutoff: 6, beta: 0.05, deadzone: 40 };
+// "Steadiness" slider (0..100) maps INVERSELY to One-Euro minCutoff so higher = steadier.
+const steadyToCut = (s) => 6.0 - (s / 100) * (6.0 - 0.3);
+const cutToSteady = (c) => Math.round((6.0 - c) / (6.0 - 0.3) * 100);
+
+function refreshTunePanel() {
+  $("t-gain").value = TUNE.gain; $("t-gain-val").textContent = Math.round(TUNE.gain);
+  $("t-steady").value = cutToSteady(TUNE.minCutoff); $("t-steady-val").textContent = cutToSteady(TUNE.minCutoff);
+  $("t-beta").value = TUNE.beta; $("t-beta-val").textContent = TUNE.beta.toFixed(3);
+  $("t-dz").value = TUNE.deadzone; $("t-dz-val").textContent = TUNE.deadzone;
+  // keep the landing gain slider + readout in sync
+  if ($("gain")) $("gain").value = TUNE.gain;
+  if ($("gain-readout")) $("gain-readout").textContent = Math.round(TUNE.gain);
+}
+function wireTunePanel() {
+  $("t-gain").addEventListener("input", (e) => { TUNE.gain = parseFloat(e.target.value); saveTune(); refreshTunePanel(); });
+  $("t-steady").addEventListener("input", (e) => { TUNE.minCutoff = steadyToCut(parseFloat(e.target.value)); saveTune(); refreshTunePanel(); });
+  $("t-beta").addEventListener("input", (e) => { TUNE.beta = parseFloat(e.target.value); saveTune(); refreshTunePanel(); });
+  $("t-dz").addEventListener("input", (e) => { TUNE.deadzone = parseFloat(e.target.value); saveTune(); refreshTunePanel(); });
+}
+function tuneStep(p, d) {
+  TUNE[p] = Math.max(TUNE_MIN[p], Math.min(TUNE_MAX[p], TUNE[p] + d));
+  saveTune(); refreshTunePanel();
+}
+
+// ============================================================
+// Tuning sandbox (free play — no scoring)
+// ============================================================
+const sbCanvas = $("sandbox-stage");
+const sbctx = sbCanvas.getContext("2d");
+let sandboxRaf = null;
+const wobbleBuf = [];
+
+function updateWobble() {
+  if (wobbleBuf.length < 5) { $("t-wobble").textContent = "wobble: —"; return; }
+  const mx = wobbleBuf.reduce((s, p) => s + p[0], 0) / wobbleBuf.length;
+  const my = wobbleBuf.reduce((s, p) => s + p[1], 0) / wobbleBuf.length;
+  const rms = Math.sqrt(wobbleBuf.reduce((s, p) => s + (p[0] - mx) ** 2 + (p[1] - my) ** 2, 0) / wobbleBuf.length);
+  $("t-wobble").textContent = `wobble (RMS, last ${wobbleBuf.length}f): ${rms.toFixed(1)} px`;
+}
+
+function runSandbox() {
+  const W = window.innerWidth, H = window.innerHeight;
+  sbCanvas.width = W; sbCanvas.height = H;
+  resetFilters(); wobbleBuf.length = 0;
+  const targets = (CFG.targets || []).map((t) => [t.pos[0] * W, t.pos[1] * H, t.radius_px]);
+  const loop = () => {
+    sandboxRaf = requestAnimationFrame(loop);
+    const head = extractHead(detectNow());
+    sbctx.clearRect(0, 0, W, H);
+    for (const [tx, ty, r] of targets) {
+      sbctx.beginPath(); sbctx.arc(tx, ty, r, 0, 2 * Math.PI);
+      sbctx.strokeStyle = "#4a5261"; sbctx.lineWidth = 2; sbctx.stroke();
+    }
+    if (head) {
+      const sm = smooth(head);
+      const [cx, cy] = headToCursor(sm, W, H, TUNE.gain);
+      wobbleBuf.push([cx, cy]); if (wobbleBuf.length > 30) wobbleBuf.shift();
+      for (const [tx, ty, r] of targets) {
+        if (Math.hypot(cx - tx, cy - ty) <= r) {
+          sbctx.beginPath(); sbctx.arc(tx, ty, r, 0, 2 * Math.PI);
+          sbctx.fillStyle = "rgba(46,204,113,0.25)"; sbctx.fill();
+        }
+      }
+      sbctx.beginPath(); sbctx.arc(cx, cy, 10, 0, 2 * Math.PI); sbctx.fillStyle = "#4da3ff"; sbctx.fill();
+      sbctx.beginPath(); sbctx.arc(cx, cy, 3, 0, 2 * Math.PI); sbctx.fillStyle = "#fff"; sbctx.fill();
+      updateWobble();
+    }
+  };
+  loop();
+}
+function exitSandbox() {
+  if (sandboxRaf) cancelAnimationFrame(sandboxRaf);
+  sbctx.clearRect(0, 0, sbCanvas.width, sbCanvas.height);
+  showTunePanel(false);
+  if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+  show("landing"); startPreview();
 }
 
 // ============================================================
@@ -319,6 +454,7 @@ function runTask() {
     // per-trial runtime:
     tStart: 0, insideSince: null, samples: [],
   };
+  showTunePanel(true);   // levers stay adjustable mid-task
   beginTrial();
   taskState.raf = requestAnimationFrame(taskLoop);
 }
@@ -399,6 +535,7 @@ async function finishTask() {
   const st = taskState;
   stopTaskLoop();
   st.aborted = true;
+  showTunePanel(false);
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   if (document.fullscreenElement) { try { await document.exitFullscreen(); } catch { /* ignore */ } }
   await submitAndScore(st.completed);
@@ -408,6 +545,7 @@ function abortTask() {
   if (!taskState) return;
   taskState.aborted = true;
   stopTaskLoop();
+  showTunePanel(false);
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
   overlay(""); show("landing"); startPreview();
@@ -432,6 +570,8 @@ async function submitAndScore(trials) {
     smoothing_alpha: (CFG.control && CFG.control.smoothing_alpha) || 0.5,
     invert_pitch: invertPitch(),
     neutral: neutral || {},
+    tune: { gain: TUNE.gain, min_cutoff: TUNE.minCutoff, beta: TUNE.beta, deadzone: TUNE.deadzone,
+            invert_yaw: invertYaw(), invert_pitch: invertPitch(), filter: "one_euro" },
     user_agent: navigator.userAgent,
   };
   let sessionId;
@@ -517,12 +657,14 @@ async function init() {
   try { CFG = await (await fetch("/api/headpoint_config")).json(); }
   catch (e) { overlay(`Failed to load /api/headpoint_config: ${e.message}`); return; }
 
-  // gain slider bounds from config
+  // gain slider bounds from config; default gain from config, then stored prefs.
   const c = CFG.control || {};
   if (c.gain_slider_min != null) $("gain").min = c.gain_slider_min;
   if (c.gain_slider_max != null) $("gain").max = c.gain_slider_max;
-  if (c.default_gain_px_per_rad != null) $("gain").value = c.default_gain_px_per_rad;
-  if (c.invert_pitch) $("invert_pitch").checked = true;
+  if (c.default_gain_px_per_rad != null) TUNE.gain = c.default_gain_px_per_rad;
+  loadTune();                 // localStorage overrides defaults (persisted feel)
+  wireTunePanel();
+  refreshTunePanel();
 
   prefillGeometry();
   try { await startCamera(); } catch (e) { overlay(`Camera denied/unavailable: ${e.message}`); return; }
@@ -531,7 +673,17 @@ async function init() {
 
   $("diag-apply").addEventListener("click", applyDiagonal);
   $("neutral-btn").addEventListener("click", captureNeutral);
+  // landing gain slider shares TUNE.gain with the in-task/sandbox panel
+  $("gain").addEventListener("input", (e) => { TUNE.gain = parseFloat(e.target.value); saveTune(); refreshTunePanel(); });
 
+  $("sandbox-btn").addEventListener("click", async () => {
+    if (!neutral) return;
+    if (previewLoop) cancelAnimationFrame(previewLoop);
+    show("sandbox");
+    showTunePanel(true);
+    await enterFullscreen();
+    setTimeout(runSandbox, 120);
+  });
   $("start-btn").addEventListener("click", async () => {
     if (!readyToStart()) return;
     if (previewLoop) cancelAnimationFrame(previewLoop);
@@ -540,19 +692,33 @@ async function init() {
     setTimeout(runTask, 120);
   });
   $("again-btn").addEventListener("click", () => {
-    neutral = null; smoothHead = null;
+    neutral = null; resetFilters();
     $("neutral-status").textContent = "";
     show("landing"); startPreview();
   });
 }
 
 window.addEventListener("keydown", (e) => {
-  if (!screens.task.classList.contains("active")) return;
-  if (e.code === "Escape") { e.preventDefault(); abortTask(); }
+  const inTask = screens.task.classList.contains("active");
+  const inSandbox = screens.sandbox.classList.contains("active");
+  if (inTask && e.code === "Escape") { e.preventDefault(); abortTask(); return; }
+  if (inSandbox && e.code === "Escape") { e.preventDefault(); exitSandbox(); return; }
+  if (!(inTask || inSandbox)) return;
+  // live tuning keys (work during sandbox AND the scored task)
+  const steps = {
+    "[": ["gain", -250], "]": ["gain", 250],
+    "-": ["minCutoff", -0.3], "=": ["minCutoff", 0.3],   // lower cutoff = steadier
+    ";": ["beta", -0.002], "'": ["beta", 0.002],
+    ",": ["deadzone", -2], ".": ["deadzone", 2],
+  };
+  if (steps[e.key]) { e.preventDefault(); tuneStep(steps[e.key][0], steps[e.key][1]); }
 });
 window.addEventListener("resize", () => {
   if (screens.task.classList.contains("active") && taskState && !taskState.aborted) {
     const [w, h] = sizeCanvas(); taskState.W = w; taskState.H = h;
+  }
+  if (screens.sandbox.classList.contains("active")) {
+    sbCanvas.width = window.innerWidth; sbCanvas.height = window.innerHeight;
   }
 });
 

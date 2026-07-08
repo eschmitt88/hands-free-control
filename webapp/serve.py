@@ -107,6 +107,7 @@ class HeadpointMeta(BaseModel):
     smoothing_alpha: float = 0.5
     invert_pitch: bool = False
     neutral: Dict[str, float] = {}
+    tune: dict = {}
     user_agent: str = ""
 
 
@@ -313,6 +314,7 @@ def api_headpoint_session(body: HeadpointSessionBody) -> dict:
         "smoothing_alpha": float(body.meta.smoothing_alpha),
         "invert_pitch": bool(body.meta.invert_pitch),
         "neutral": {k: float(v) for k, v in body.meta.neutral.items()},
+        "tune": body.meta.tune,
         "user_agent": body.meta.user_agent,
         "generated": _dt.datetime.now().isoformat(timespec="seconds"),
         "source": "webapp",
