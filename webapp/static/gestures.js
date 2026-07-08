@@ -107,4 +107,5 @@ async function init() {
   $("reset-peaks").addEventListener("click", () => { for (const k of Object.keys(peaks)) peaks[k] = 0; });
   loop();
 }
+window.addEventListener("pagehide", () => { try { stream && stream.getTracks().forEach((t) => t.stop()); } catch { /* ignore */ } });
 init();
