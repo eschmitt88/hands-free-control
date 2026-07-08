@@ -280,3 +280,22 @@
     "SendMessage": 2
   }
 }
+{
+  "timestamp": "2026-07-08T00:51:57Z",
+  "session_id": "7bf5818c-05a8-4437-98bf-2b2e6f40cdc8",
+  "input_tokens": 73561,
+  "output_tokens": 620832,
+  "cache_read_tokens": 37108810,
+  "cache_creation_tokens": 1262122,
+  "tools_used_summary": {
+    "AskUserQuestion": 1,
+    "Skill": 3,
+    "Bash": 44,
+    "Agent": 17,
+    "Write": 13,
+    "Edit": 15,
+    "Read": 5,
+    "ToolSearch": 1,
+    "SendMessage": 2
+  }
+}

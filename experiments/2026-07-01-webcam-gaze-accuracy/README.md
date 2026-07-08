@@ -77,28 +77,55 @@ The analysis (`analyze.py`, `synth.py`) runs headless on aiserver2026; `synth.py
 
 ## Result
 
-Fill in after the run. Points at `metrics.json` (validation split — the search
-signal). `final_metrics.json` (held-out test) is written only by
-`analyze.py --final` at chain end. See `~/.claude/rules/evaluation.md`.
+First real in-browser session (`session_web_20260702-003616`, `metrics.json`,
+validation split). **Gaze:** mean 9.29° / median 5.56° / p95 27.4° (≈11 cm on
+screen), dwell false-activation 0.81. **Head-pose:** mean 22.91° / median 19.63°
+— but this number is a **head-still confound, not a verdict** (see Diagnostics).
+Held-out test remains unscored (`final_metrics.json` not written) — the method
+search is not finished. See `~/.claude/rules/evaluation.md`.
 
 ## Interpretation
 
-What did we actually learn? What surprised us?
+- **Gaze is coarse-only, as hypothesized.** Median 5.56° sits inside the
+  predicted 3–6° band and matches the prior art ([[l2cs-net-2022]] 3.9°,
+  [[emc-gaze-2026]] 5.8°). The mean (9.29°) is dragged up by a few large-error
+  validation dots (p95 27°), and the vertical iris signal is weak (vertical iris
+  std ≈0.003 vs ≈0.014 horizontal) — the classic webcam-gaze vertical deficit.
+  0.81 dwell false-activation confirms dwell-only selection is impractical →
+  motivates element-latching + voice-confirm over raw dwell.
+- **Hypothesis #2 (head-pose steadier) is NOT tested by this run.** In a *gaze*
+  calibration the head is held roughly still, so the head-pose regressor had no
+  deliberate pointing signal — it fit head *jitter*. The +17.25° calib→val gap
+  proves it overfit 9 near-identical calibration points. Testing the head channel
+  requires a **closed-loop head-pointing** collection (cursor visible, user aims
+  by moving the head), where the metric is settling error + acquisition time, not
+  open-loop angular error. Per the user's usage model, head only needs a *gain*
+  ("size") calibration because the visible cursor closes the loop.
 
 ## Diagnostics
 
-Fill in after the run. One line per field; `n/a` rather than blank.
-`next_candidates` must list ≥2 concrete one-sentence proposals. Metric numbers
-reference `metrics.json` (validation split) unless noted.
-
-- intended_effect_confirmed: <yes | no | partial> — <evidence with anchor>
-- leakage_check: <method> — <finding>
-- overfitting_signal: calib=<x> val=<y> gap=<z> — <interpretation> (metrics.json)
+- intended_effect_confirmed: partial — gaze coarse-accuracy hypothesis (#1)
+  confirmed (val median 5.56° in the 3–6° band, metrics.json); hypothesis #2
+  (head steadier) untestable here due to head-still confound; #3 (dwell
+  impractical) confirmed (false_activation 0.81).
+- leakage_check: split-by-target-position (calibration 3×3 / validation 4×4 /
+  test held out); analyze.py fits on calibration.jsonl only and never reads
+  test.jsonl in default mode — no leakage. Distinct physical dot positions per split.
+- overfitting_signal: gaze calib=4.66 val=9.29 gap=+4.63; headpose calib=5.66
+  val=22.91 gap=+17.25 — gaze mildly overfits (9 calibration points, 6 features,
+  α=1.0); headpose grossly overfits (head-still → 9 near-identical rows fit as
+  noise). Both argue for more calibration points and/or stronger regularization.
 - delta_from_prior: n/a (first experiment)
-- unexpected_findings: <one or two sentences, or "none">
+- unexpected_findings: head-pose scored far *worse* than gaze (opposite of the
+  hypothesis) — an artifact of measuring head pose during a head-still gaze task,
+  not evidence against head pointing. Recorded so the head-pointing experiment
+  isn't mis-anchored to this number.
 - next_candidates:
-  - <one-sentence proposal 1>
-  - <one-sentence proposal 2>
+  - Build a closed-loop head-pointing collection mode (visible cursor, gain
+    calibration, drive-to-target + dwell/confirm) measuring settling error and
+    acquisition time rather than open-loop angular error.
+  - Add more calibration points and/or raise ridge α (or per-axis regularization
+    for the weak vertical channel) and re-score gaze to shrink the +4.63° gap.
 
 ## Follow-up
 
