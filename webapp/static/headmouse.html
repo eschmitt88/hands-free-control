@@ -53,7 +53,7 @@
     <label>Steadiness <span id="t-steady-val"></span><input type="range" id="t-steady" min="0" max="100" step="1" /></label>
     <label>Deadzone (px) <span id="t-dz-val"></span><input type="range" id="t-dz" min="0" max="40" step="1" /></label>
     <hr />
-    <label>Wink threshold <span id="t-wink-val"></span><input type="range" id="t-wink" min="0.2" max="0.9" step="0.05" /></label>
+    <label>Wink margin (lower=more sensitive) <span id="t-wink-val"></span><input type="range" id="t-wink" min="0.1" max="0.6" step="0.02" /></label>
     <label>Jaw threshold <span id="t-jaw-val"></span><input type="range" id="t-jaw" min="0.2" max="0.9" step="0.05" /></label>
     <p class="hint" id="t-stats">clicks: 0 · hits: 0</p>
     <p class="hint">keys: <kbd>[</kbd><kbd>]</kbd> gain · <kbd>-</kbd><kbd>=</kbd> steady · <kbd>,</kbd><kbd>.</kbd> deadzone</p>
@@ -68,6 +68,6 @@
   </section>
 
   <div id="overlay" class="overlay hidden"><div class="overlay-box"><span id="overlay-msg"></span></div></div>
-  <script type="module" src="/static/headmouse.js?v=1"></script>
+  <script type="module" src="/static/headmouse.js?v=2"></script>
 </body>
 </html>
