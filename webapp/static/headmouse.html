@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Head-mouse + gestures (no gaze)</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <section id="landing" class="screen active">
+    <div class="card">
+      <h1>Head-mouse + gestures <span class="hint">no gaze — head points, face commands</span></h1>
+      <p class="lede">
+        Head drives the cursor (low-gain, closed-loop). <b>Open your jaw</b> to
+        clutch — the cursor freezes so you can recenter your head, then close to
+        resume (ratchet across the whole screen). <b>Wink</b> to click. This is a
+        <em>feel</em> prototype on a target grid; real OS control needs a native
+        workstation app (next step).
+      </p>
+      <div class="preview-wrap" style="max-width:300px">
+        <video id="preview" autoplay playsinline muted></video>
+        <div id="face-indicator" class="badge bad">face: searching…</div>
+      </div>
+      <div class="calib">
+        <ol class="steps">
+          <li>Look straight at center and
+            <button type="button" id="neutral-btn" class="ghost" disabled>Capture neutral</button>
+            <span id="neutral-status" class="status"></span></li>
+          <li>Head gain <span id="gain-readout">–</span>:
+            <input type="range" id="gain" min="400" max="9000" step="100" value="1200" /></li>
+          <li>Signs:
+            <label class="invert"><input type="checkbox" id="invert_yaw" checked /> invert horizontal</label>
+            <label class="invert"><input type="checkbox" id="invert_pitch" checked /> invert vertical</label></li>
+        </ol>
+      </div>
+      <div class="actions">
+        <button id="start-btn" disabled>Start head-mouse</button>
+      </div>
+      <p class="hint"><b>jaw-open</b> = clutch (freeze + recenter) &middot; <b>wink L/R</b> = click &middot;
+         <kbd>Esc</kbd> exits. &middot; <a href="/gestures">Gesture lab &rarr;</a></p>
+    </div>
+  </section>
+
+  <section id="desk" class="screen">
+    <canvas id="stage"></canvas>
+    <div id="mode-hud" class="hud"></div>
+    <div id="desk-hud" class="hud hud-bottom">jaw = clutch · wink = click · Esc = done</div>
+  </section>
+
+  <div id="tune-panel" class="tune-panel hidden">
+    <h3>Tuning <span class="hint">drag or keys</span></h3>
+    <label>Head gain <span id="t-gain-val"></span><input type="range" id="t-gain" min="400" max="12000" step="100" /></label>
+    <label>Steadiness <span id="t-steady-val"></span><input type="range" id="t-steady" min="0" max="100" step="1" /></label>
+    <label>Deadzone (px) <span id="t-dz-val"></span><input type="range" id="t-dz" min="0" max="40" step="1" /></label>
+    <hr />
+    <label>Wink threshold <span id="t-wink-val"></span><input type="range" id="t-wink" min="0.2" max="0.9" step="0.05" /></label>
+    <label>Jaw threshold <span id="t-jaw-val"></span><input type="range" id="t-jaw" min="0.2" max="0.9" step="0.05" /></label>
+    <p class="hint" id="t-stats">clicks: 0 · hits: 0</p>
+    <p class="hint">keys: <kbd>[</kbd><kbd>]</kbd> gain · <kbd>-</kbd><kbd>=</kbd> steady · <kbd>,</kbd><kbd>.</kbd> deadzone</p>
+  </div>
+
+  <section id="results" class="screen">
+    <div class="card">
+      <h1>Session</h1>
+      <p id="verdict" class="verdict"></p>
+      <div class="actions"><button id="again-btn">Back</button></div>
+    </div>
+  </section>
+
+  <div id="overlay" class="overlay hidden"><div class="overlay-box"><span id="overlay-msg"></span></div></div>
+  <script type="module" src="/static/headmouse.js?v=1"></script>
+</body>
+</html>

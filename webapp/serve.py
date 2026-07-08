@@ -390,6 +390,11 @@ def gestures_index() -> FileResponse:
     return FileResponse(os.path.join(STATIC_DIR, "gestures.html"))
 
 
+@app.get("/headmouse")
+def headmouse_index() -> FileResponse:
+    return FileResponse(os.path.join(STATIC_DIR, "headmouse.html"))
+
+
 @app.get("/api/fusion_config")
 def api_fusion_config() -> dict:
     cfg = _load_yaml(CONFIG3_YAML)
