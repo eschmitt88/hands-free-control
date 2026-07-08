@@ -5,3 +5,4 @@ Chronological record of runs and observations.
 - 2026-07-08 scaffolded. Closed-loop head-pointing task (webapp mode /headpoint).
   Metric shift from open-loop angular error to acquisition time + settling +
   gain-robustness. Awaiting first real browser session.
+2026-07-08 15:20 first real session hpsession_web_20260708-151320 (100% success, 0.25deg settle, under swapped axes); axis swap fixed in headpoint.js
