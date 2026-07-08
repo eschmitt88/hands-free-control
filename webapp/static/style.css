@@ -218,3 +218,6 @@ thead th { background: #0d1116; color: var(--muted); }
 .gl-peak { position: absolute; top: -1px; bottom: -1px; width: 2px; background: #ffd24f; }
 .gl-val { font-size: 12px; color: var(--ink); text-align: right; font-variant-numeric: tabular-nums; }
 .gl-row.triggered .gl-name { color: var(--good); font-weight: 600; }
+
+/* tune-panel select (headmouse wink method) */
+.tune-panel select { width: 100%; background: #0b0e12; color: var(--ink); border: 1px solid var(--border); border-radius: 6px; padding: 3px 6px; margin-top: 2px; font-size: 12px; }
