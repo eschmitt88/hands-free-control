@@ -30,8 +30,15 @@ See `literature/` and the four candidate triage files in `raw/_candidates/`.
 - `experiments/2026-07-08-head-pointing-closed-loop/` — measure the head channel
   the way it's actually used: a visible head-driven cursor, closed-loop target
   acquisition (acquisition time / settling / gain-robustness), not open-loop
-  angular error. Webapp mode `/headpoint`. Not HCE-scoped (behavioral task).
-  status: running (harness + synth self-check green; awaiting real session).
+  angular error. Webapp mode `/headpoint`. First real session: 100% acquisition
+  across ±40% gain, 0.25° settling, 3.25 s/target (One-Euro filter + tuning
+  sandbox added after). status: running.
+- `experiments/2026-07-08-gaze-head-fusion/` — the thesis integration: gaze sets a
+  coarse cursor anchor, head applies a fine offset, mutually gated by head motion
+  (head-gated auto-warp handoff). Live in-browser gaze (client-side ridge, node-
+  tested). Prior art: [[magic-pointing-1999]] made hands-free via the
+  [[vestibulo-ocular-reflex]]. Webapp mode `/fusion`. Not HCE-scoped. status:
+  running (harness green; awaiting first fused session).
 
 ## Open questions
 

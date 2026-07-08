@@ -17,11 +17,15 @@ from __future__ import annotations
 
 import datetime as _dt
 import json
+import mimetypes
 import os
 import shutil
 import subprocess
 import sys
 from typing import Dict, List, Optional
+
+# Ensure ES modules (.mjs) are served with a JS MIME so the browser will import them.
+mimetypes.add_type("text/javascript", ".mjs")
 
 import yaml
 from fastapi import FastAPI, HTTPException
@@ -60,6 +64,11 @@ RESULTS2_DIR = os.path.join(EXP2, "results")
 CONFIG2_YAML = os.path.join(EXP2, "config.yaml")
 ANALYZE2_PY = os.path.join(EXP2, "analyze_headpoint.py")
 METRICS2_JSON = os.path.join(EXP2, "metrics.json")
+
+# --- Third experiment: gaze + head fusion (2026-07-08) -----------------------
+EXP3 = os.path.join(ROOT, "experiments", "2026-07-08-gaze-head-fusion")
+RESULTS3_DIR = os.path.join(EXP3, "results")
+CONFIG3_YAML = os.path.join(EXP3, "config.yaml")
 
 _VALID_PHASES = ("calibration", "validation", "test")
 
@@ -130,6 +139,13 @@ class HeadpointSessionBody(BaseModel):
 
 class HeadpointAnalyzeBody(BaseModel):
     session_id: str
+
+
+# --- Fusion request models ---------------------------------------------------
+class FusionSessionBody(BaseModel):
+    meta: dict
+    samples: List[list]
+    events: List[dict] = []
 
 
 # --- Endpoints ---------------------------------------------------------------
@@ -356,6 +372,55 @@ def api_headpoint_analyze(body: HeadpointAnalyzeBody) -> JSONResponse:
     with open(METRICS2_JSON, "r", encoding="utf-8") as fh:
         metrics = json.load(fh)
     return JSONResponse(metrics)
+
+
+# --- Fusion (gaze + head) endpoints ------------------------------------------
+@app.get("/fusion")
+def fusion_index() -> FileResponse:
+    return FileResponse(os.path.join(STATIC_DIR, "fusion.html"))
+
+
+@app.get("/api/fusion_config")
+def api_fusion_config() -> dict:
+    cfg = _load_yaml(CONFIG3_YAML)
+    screen = cfg.get("screen", {})
+    return {
+        "gaze_calibration": cfg.get("gaze_calibration", {}),
+        "fusion": cfg.get("fusion", {}),
+        "control": cfg.get("control", {}),
+        "practice_targets": cfg.get("practice_targets", []),
+        "screen_defaults": {
+            "width_mm": screen.get("width_mm"),
+            "height_mm": screen.get("height_mm"),
+            "viewing_distance_mm": cfg.get("viewing_distance_mm"),
+        },
+    }
+
+
+@app.post("/api/fusion_session")
+def api_fusion_session(body: FusionSessionBody) -> dict:
+    """Persist a fused free-play session -> results/fusion_web_<ts>/ (trajectory + events + meta)."""
+    ts = _dt.datetime.now().strftime("%Y%m%d-%H%M%S")
+    session_id = f"fusion_web_{ts}"
+    session_dir = os.path.join(RESULTS3_DIR, session_id)
+    suffix = 0
+    while os.path.exists(session_dir):
+        suffix += 1
+        session_id = f"fusion_web_{ts}-{suffix}"
+        session_dir = os.path.join(RESULTS3_DIR, session_id)
+    os.makedirs(session_dir, exist_ok=False)
+
+    with open(os.path.join(session_dir, "trajectory.json"), "w", encoding="utf-8") as fh:
+        json.dump(body.samples, fh)
+    with open(os.path.join(session_dir, "events.json"), "w", encoding="utf-8") as fh:
+        json.dump(body.events, fh, indent=2)
+    meta_out = dict(body.meta)
+    meta_out["generated"] = _dt.datetime.now().isoformat(timespec="seconds")
+    meta_out["source"] = "webapp"
+    with open(os.path.join(session_dir, "meta.json"), "w", encoding="utf-8") as fh:
+        json.dump(meta_out, fh, indent=2)
+        fh.write("\n")
+    return {"session_id": session_id, "n_samples": len(body.samples), "n_events": len(body.events)}
 
 
 # Static mount (js/css/vendor). Kept after routes so explicit paths win.

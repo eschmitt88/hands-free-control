@@ -1,0 +1,39 @@
+# Inputs / parameters for the fused gaze-anchor + head-fine controller.
+seed: 42
+
+gaze_calibration:
+  # 3x3 normalized target grid for the in-browser ridge fit.
+  targets: [[0.1,0.1],[0.5,0.1],[0.9,0.1],[0.1,0.5],[0.5,0.5],[0.9,0.5],[0.1,0.9],[0.5,0.9],[0.9,0.9]]
+  frames_per_target: 30
+  warmup_frames: 10
+  ridge_lambda: 1.0
+
+fusion:
+  # Re-anchor (gaze warp) fires only when ALL hold:
+  reanchor_dist_deg: 6.0     # gaze point must be at least this far from the cursor
+  head_quiet_degps: 8.0      # head angular speed below this (not mid-nudge)
+  fixation_ms: 100           # gaze settled (low gaze-point velocity) for this long
+  gaze_settle_degps: 25.0    # gaze-point speed below this counts as "settled"
+
+# Head fine-cursor defaults (inherited feel from 2026-07-08-head-pointing-closed-loop).
+control:
+  default_gain_px_per_rad: 1000
+  min_cutoff: 1.0
+  beta: 0.007
+  deadzone: 0
+
+# Practice targets for the free-play feel test (normalized).
+practice_targets:
+  - {pos: [0.5, 0.5], radius_px: 32}
+  - {pos: [0.85, 0.5], radius_px: 32}
+  - {pos: [0.15, 0.5], radius_px: 32}
+  - {pos: [0.85, 0.15], radius_px: 24}
+  - {pos: [0.15, 0.85], radius_px: 24}
+  - {pos: [0.5, 0.9], radius_px: 24}
+
+screen:
+  width_px: 1920
+  height_px: 1080
+  width_mm: 598
+  height_mm: 336
+viewing_distance_mm: 650
