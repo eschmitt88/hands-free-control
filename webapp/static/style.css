@@ -180,3 +180,27 @@ thead th { background: #0d1116; color: var(--muted); }
   border-radius: 8px;
   display: block;
 }
+
+/* ---------- tuning sandbox + live control panel ---------- */
+#sandbox-stage { display: block; width: 100vw; height: 100vh; background: var(--bg); }
+.tune-panel {
+  position: fixed;
+  top: 14px; left: 14px;
+  width: 260px;
+  padding: 12px 14px;
+  background: rgba(20, 24, 31, 0.92);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  z-index: 50;
+  backdrop-filter: blur(3px);
+}
+.tune-panel.hidden { display: none; }
+.tune-panel h3 { margin: 0 0 8px; font-size: 14px; }
+.tune-panel h3 .hint { font-weight: normal; }
+.tune-panel label { display: block; font-size: 12px; color: var(--muted); margin: 8px 0 2px; }
+.tune-panel label span { color: var(--ink); float: right; font-variant-numeric: tabular-nums; }
+.tune-panel input[type="range"] { width: 100%; accent-color: var(--accent); margin: 2px 0 0; }
+.tune-panel #t-wobble { margin: 10px 0 4px; color: var(--ink); font-variant-numeric: tabular-nums; }
+.tune-panel kbd {
+  background: #2a323c; border-radius: 4px; padding: 0 4px; font-size: 11px; margin: 0 1px;
+}
