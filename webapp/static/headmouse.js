@@ -337,4 +337,6 @@ window.addEventListener("keydown", (e) => {
   if (t[e.key]) { e.preventDefault(); clampStep(t[e.key][0], t[e.key][1]); }
 });
 window.addEventListener("resize", () => { if (screens.desk.classList.contains("active") && st && !st.aborted) { st.W = window.innerWidth; st.H = window.innerHeight; canvas.width = st.W; canvas.height = st.H; } });
+// Release the camera when the page is closed/navigated away (prevents a stuck stream).
+window.addEventListener("pagehide", () => { try { stream && stream.getTracks().forEach((t) => t.stop()); } catch { /* ignore */ } });
 init();

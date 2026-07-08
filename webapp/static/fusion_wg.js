@@ -343,4 +343,5 @@ window.addEventListener("keydown", (e) => {
 });
 window.addEventListener("resize", () => { if (screens.fusion.classList.contains("active") && fusionState && !fusionState.aborted) { fusionState.W = window.innerWidth; fusionState.H = window.innerHeight; fcanvas.width = fusionState.W; fcanvas.height = fusionState.H; } });
 
+window.addEventListener("pagehide", () => { try { webgazer.end(); } catch { /* ignore */ } });
 init();

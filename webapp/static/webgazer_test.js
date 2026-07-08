@@ -198,3 +198,6 @@ fetch("/api/headpoint_config").then((r) => r.json()).then((c) => {
   if (d.height_mm) $("height_mm").value = d.height_mm;
   if (d.viewing_distance_mm) $("viewing_cm").value = Math.round(d.viewing_distance_mm / 10);
 }).catch(() => {});
+
+// Release the camera on page close/navigate (WebGazer owns it here).
+window.addEventListener("pagehide", () => { try { webgazer.end(); } catch { /* ignore */ } });
