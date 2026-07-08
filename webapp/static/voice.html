@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Voice commands (LLM intent)</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <section id="landing" class="screen active">
+    <div class="card">
+      <h1>Voice commands <span class="hint">natural speech → LLM intent → action</span></h1>
+      <p class="lede">
+        Speak naturally — an LLM maps your words to a command, so you don't memorize
+        a grammar. Try: <em>"click the green one"</em>, <em>"click number five"</em>,
+        <em>"scroll down"</em>, <em>"type hello world"</em>, <em>"clear that"</em>.
+        This is the "voice" leg that pairs with head-point + gestures.
+      </p>
+
+      <div class="actions">
+        <button id="mic-btn">🎙 Start listening</button>
+        <span id="mic-status" class="status">idle</span>
+      </div>
+      <p class="hint">Live: <span id="interim" style="color:var(--ink)">—</span></p>
+
+      <!-- demo surface -->
+      <div id="targets" class="vc-targets"></div>
+
+      <div class="vc-row">
+        <div id="scroll" class="vc-scroll"></div>
+        <div class="vc-dictate">
+          <label class="hint">Dictation field ("type …", "clear")</label>
+          <textarea id="dictation" rows="4" placeholder="say: type hello world"></textarea>
+        </div>
+      </div>
+
+      <h2>Intent log</h2>
+      <div id="log" class="vc-log"></div>
+      <p class="hint">Chrome only (Web Speech API). Prototype: real OS control +
+         local Whisper come with the native app. &middot; <a href="/headmouse">Head-mouse &rarr;</a></p>
+    </div>
+  </section>
+  <div id="overlay" class="overlay hidden"><div class="overlay-box"><span id="overlay-msg"></span></div></div>
+  <script type="module" src="/static/voice.js?v=1"></script>
+</body>
+</html>

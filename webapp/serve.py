@@ -58,6 +58,18 @@ SPLITS_YAML = os.path.join(EXP, "splits.yaml")
 ANALYZE_PY = os.path.join(EXP, "analyze.py")
 METRICS_JSON = os.path.join(EXP, "metrics.json")
 
+# Resolve `claude` by absolute path (systemd --user has a minimal PATH). Used by
+# the voice intent layer to map a spoken utterance -> structured command with no
+# API billing (shells out to the CLI, per the user's established pattern).
+CLAUDE_BIN = shutil.which("claude") or next(
+    (p for p in (
+        os.path.expanduser("~/.local/bin/claude"),
+        "/usr/local/bin/claude",
+        "/usr/bin/claude",
+    ) if os.path.exists(p)),
+    "claude",
+)
+
 # --- Second experiment: closed-loop head-pointing (2026-07-08) ---------------
 EXP2 = os.path.join(ROOT, "experiments", "2026-07-08-head-pointing-closed-loop")
 RESULTS2_DIR = os.path.join(EXP2, "results")
@@ -146,6 +158,12 @@ class FusionSessionBody(BaseModel):
     meta: dict
     samples: List[list]
     events: List[dict] = []
+
+
+# --- Voice intent request model ----------------------------------------------
+class VoiceIntentBody(BaseModel):
+    utterance: str
+    targets: List[dict] = []
 
 
 # --- Endpoints ---------------------------------------------------------------
@@ -388,6 +406,62 @@ def fusion_wg_index() -> FileResponse:
 @app.get("/gestures")
 def gestures_index() -> FileResponse:
     return FileResponse(os.path.join(STATIC_DIR, "gestures.html"))
+
+
+@app.get("/voice")
+def voice_index() -> FileResponse:
+    return FileResponse(os.path.join(STATIC_DIR, "voice.html"))
+
+
+def _extract_json(text: str) -> Optional[dict]:
+    """Pull the first JSON object out of an LLM reply (tolerates fences/prose)."""
+    text = text.strip()
+    start = text.find("{")
+    end = text.rfind("}")
+    if start == -1 or end == -1 or end <= start:
+        return None
+    try:
+        return json.loads(text[start:end + 1])
+    except ValueError:
+        return None
+
+
+@app.post("/api/voice_intent")
+def api_voice_intent(body: VoiceIntentBody) -> JSONResponse:
+    """Map a spoken utterance -> one structured UI command via `claude -p`."""
+    if not body.utterance.strip():
+        raise HTTPException(status_code=400, detail="empty utterance")
+    targets_desc = "; ".join(
+        f'#{t.get("id")}=color:{t.get("color", "?")} label:"{t.get("label", "")}"'
+        for t in body.targets
+    ) or "(none)"
+    prompt = (
+        "You are the intent parser for a hands-free UI demo. Map the user's spoken "
+        "utterance to EXACTLY ONE command as compact JSON. Respond with ONLY the JSON "
+        "object — no prose, no code fence.\n"
+        f"Available targets: {targets_desc}\n"
+        "Command schema (pick one):\n"
+        '  {"action":"click","which":<target id int>}\n'
+        '  {"action":"scroll","direction":"up"|"down"}\n'
+        '  {"action":"type","text":"<verbatim words to type>"}\n'
+        '  {"action":"clear"}\n'
+        '  {"action":"none"}\n'
+        'Resolve natural references ("the green one", "number five", "the last one") '
+        "to a concrete target id. Use \"none\" if nothing fits.\n"
+        f'Utterance: "{body.utterance.strip()}"'
+    )
+    try:
+        proc = subprocess.run(
+            [CLAUDE_BIN, "-p", prompt], capture_output=True, text=True, timeout=30
+        )
+    except subprocess.TimeoutExpired:
+        raise HTTPException(status_code=504, detail="intent parse timed out")
+    if proc.returncode != 0:
+        raise HTTPException(status_code=500, detail=f"claude failed: {(proc.stderr or proc.stdout)[-300:]}")
+    intent = _extract_json(proc.stdout)
+    if intent is None:
+        intent = {"action": "none", "raw": proc.stdout.strip()[:200]}
+    return JSONResponse({"utterance": body.utterance.strip(), "intent": intent})
 
 
 @app.get("/headmouse")
