@@ -303,7 +303,7 @@ async function captureNeutral() {
 // ============================================================
 // Live tuning panel (shown in sandbox + task; drag sliders or use keys)
 // ============================================================
-const TUNE_MIN = { gain: 1000, minCutoff: 0.3, beta: 0, deadzone: 0 };
+const TUNE_MIN = { gain: 400, minCutoff: 0.3, beta: 0, deadzone: 0 };
 const TUNE_MAX = { gain: 12000, minCutoff: 6, beta: 0.05, deadzone: 40 };
 // "Steadiness" slider (0..100) maps INVERSELY to One-Euro minCutoff so higher = steadier.
 const steadyToCut = (s) => 6.0 - (s / 100) * (6.0 - 0.3);

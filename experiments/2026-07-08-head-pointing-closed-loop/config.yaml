@@ -27,8 +27,8 @@ control:
   invert_pitch: false     # flip if looking up moves the cursor down
   # Head yaw->cursor_x, pitch->cursor_y sensitivity. The user sets this live with
   # a slider (the whole "size calibration"); this is the starting value.
-  default_gain_px_per_rad: 4000
-  gain_slider_min: 1000
+  default_gain_px_per_rad: 1000   # user's preferred fine-tuner setting (2026-07-08)
+  gain_slider_min: 400            # allow even finer (head as short-range fine-adjust)
   gain_slider_max: 9000
 
 robustness:
