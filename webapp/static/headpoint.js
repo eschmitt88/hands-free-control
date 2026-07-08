@@ -98,24 +98,30 @@ function detectNow() {
   try { return landmarker.detectForVideo(video, ts); } catch { return null; }
 }
 
-// Head pose (yaw,pitch) in radians from the rigid transform matrix.
+// Head pointing signal from the rigid transform matrix (column-major 4x4).
+//
+// Rather than decompose Euler angles (whose axis labels depend on a convention
+// that's easy to get wrong), use the head-FORWARD direction directly: the image
+// of the model's local Z axis is the 3rd column = (m8, m9, m10). Turning your
+// head left/right swings that vector sideways (m8, the world-X component);
+// nodding swings it up/down (m9). atan2 against the forward depth (m10) gives
+// stable, decoupled horizontal/vertical pointing angles in radians. Sign is
+// handled by the invert toggles.
+// Raw head-forward components (for the live diagnostic readout).
+function extractHeadRaw(res) {
+  const m = res.facialTransformationMatrixes[0].data;
+  return { fx: m[8], fy: m[9], fz: m[10] };
+}
+
 function extractHead(res) {
   if (!res || !res.faceLandmarks || res.faceLandmarks.length === 0) return null;
   const mats = res.facialTransformationMatrixes;
   if (!mats || !mats.length || !mats[0].data || mats[0].data.length < 16) return null;
   const m = mats[0].data;
-  const R00 = m[0], R10 = m[1], R20 = m[2], R21 = m[6], R22 = m[10];
-  const sy = Math.hypot(R00, R10);
-  // Map each Euler angle to the head motion that should drive that cursor axis.
-  // MediaPipe's face transform frame is ~ X=right, Y=up, Z=out-of-face, so:
-  //   yaw   = rotation about Y (up axis)   = turning head left/right -> cursor X
-  //   pitch = rotation about X (right axis)= nodding up/down          -> cursor Y
-  //   roll  = rotation about Z (optical)   = head tilt (NOT used for the cursor)
-  // The earlier build bound cursor X to the Z-axis (roll/tilt) angle, which
-  // barely changes when you turn your head — hence "only up/down moved".
-  const yaw = Math.atan2(-R20, sy);     // horizontal (head turn)
-  const pitch = Math.atan2(R21, R22);   // vertical (nod)
-  const roll = Math.atan2(R10, R00);    // tilt (unused for pointing)
+  const fx = m[8], fy = m[9], fz = m[10];   // head-forward direction in world space
+  const yaw = Math.atan2(fx, fz);           // horizontal (turn left/right)
+  const pitch = Math.atan2(fy, fz);         // vertical (nod up/down)
+  const roll = Math.atan2(m[1], m[0]);      // in-plane tilt (unused for pointing)
   if (![yaw, pitch, roll].every(Number.isFinite)) return null;
   return { yaw, pitch, roll };
 }
@@ -200,6 +206,15 @@ function startPreview() {
       pvctx.moveTo(0, pv.height / 2); pvctx.lineTo(pv.width, pv.height / 2); pvctx.stroke();
       pvctx.beginPath(); pvctx.arc(cx, cy, 8, 0, 2 * Math.PI);
       pvctx.fillStyle = "#4da3ff"; pvctx.fill();
+
+      // live diagnostic: horizontal/vertical signal relative to neutral (deg)
+      const n = neutral || { yaw: sm.yaw, pitch: sm.pitch };
+      const hDeg = ((sm.yaw - n.yaw) * 180 / Math.PI).toFixed(1);
+      const vDeg = ((sm.pitch - n.pitch) * 180 / Math.PI).toFixed(1);
+      const raw = extractHeadRaw(res);
+      $("head-debug").textContent =
+        `head signal — horizontal: ${hDeg}°   vertical: ${vDeg}°   ` +
+        `(fwd x=${raw.fx.toFixed(2)} y=${raw.fy.toFixed(2)} z=${raw.fz.toFixed(2)})`;
     }
     $("start-btn").disabled = !readyToStart();
     previewLoop = requestAnimationFrame(tick);
