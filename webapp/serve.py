@@ -423,6 +423,26 @@ def api_fusion_session(body: FusionSessionBody) -> dict:
     return {"session_id": session_id, "n_samples": len(body.samples), "n_events": len(body.events)}
 
 
+# --- WebGazer discriminating test (gaze-quality yardstick) -------------------
+@app.get("/webgazer")
+def webgazer_index() -> FileResponse:
+    return FileResponse(os.path.join(STATIC_DIR, "webgazer_test.html"))
+
+
+@app.post("/api/webgazer_result")
+def api_webgazer_result(payload: dict) -> dict:
+    """Persist a WebGazer-vs-ours comparison under the gaze experiment (record only)."""
+    os.makedirs(RESULTS_DIR, exist_ok=True)
+    ts = _dt.datetime.now().strftime("%Y%m%d-%H%M%S")
+    out = dict(payload)
+    out["generated"] = _dt.datetime.now().isoformat(timespec="seconds")
+    path = os.path.join(RESULTS_DIR, f"webgazer_compare_{ts}.json")
+    with open(path, "w", encoding="utf-8") as fh:
+        json.dump(out, fh, indent=2)
+        fh.write("\n")
+    return {"saved": os.path.basename(path)}
+
+
 # Static mount (js/css/vendor). Kept after routes so explicit paths win.
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
