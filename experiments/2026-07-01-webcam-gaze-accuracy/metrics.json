@@ -1,1 +1,23 @@
-{}
+{
+  "method_gaze": {
+    "mean_error_deg": 9.287,
+    "median_error_deg": 5.561,
+    "p95_error_deg": 27.423,
+    "mean_error_cm": 11.131,
+    "false_activation_rate": 0.812
+  },
+  "method_headpose": {
+    "mean_error_deg": 22.906,
+    "median_error_deg": 19.63,
+    "p95_error_deg": 45.28,
+    "mean_error_cm": 29.107,
+    "false_activation_rate": 0.875
+  },
+  "meta": {
+    "n_calibration": 9,
+    "n_validation": 16,
+    "session": "session_web_20260702-003616",
+    "viewing_distance_mm": 650.0,
+    "generated": "2026-07-02T00:36:16"
+  }
+}
