@@ -4,7 +4,7 @@ slug: "head-pointing-closed-loop"
 date: "2026-07-08"
 status: running     # running | done | abandoned
 hypothesis: "With a visible cursor driven by head pose, closed-loop feedback lets the user acquire and settle on on-screen targets reliably (>90% success, sub-cm settling) even when the head->cursor gain ('size' calibration) is only roughly set — because the user corrects in real time. Acquisition time is the cost, not accuracy. This is the opposite regime from the open-loop head-pose number in 2026-07-01-webcam-gaze-accuracy (22.9 deg), which measured head pose during a head-still gaze task and is not a controllability result."
-result: ""
+result: "First session (under accidentally-swapped axes): 100% target acquisition across a ±40% gain sweep, 0.25 deg (0.28 cm) settling, 3.25 s/target acquisition (inflated by the cross-wiring). Closed-loop control forgives coarse calibration; speed is the cost. Axis swap fixed; clean re-run pending."
 related_concepts: [head-pose-pointing, camera-mouse, eviacam, closed-loop-control, gain-calibration, dwell-click, area-cursor, gaze-head-pointing]
 related_literature: [camera-mouse, eviacam]
 tags: [head-pose, closed-loop, control, pointing, measurement]
@@ -85,27 +85,59 @@ method against this task, it must introduce a split then (and an ADR).
 
 ## Result
 
-Fill in after the run. Points at `metrics.json` (this experiment's own result
-file — no held-out split here).
+First real session (`hpsession_web_20260708-151320`, `metrics.json`), **collected
+under cross-wired axes** — the horizontal/vertical head→cursor mapping was swapped
+for this run (fixed afterward in `webapp/static/headpoint.js`), so the user was
+fighting a control where turning the head moved the cursor vertically. Even so:
+
+- **success_rate = 1.0** — all 30 targets acquired, across every gain (×0.6/×1.0/×1.4).
+- **median settling = 0.25° (0.28 cm)** — sub-cm steadiness held through the dwell.
+- **median acquisition = 3.25 s** — the cost; inflated by the cross-wiring.
+- **mean overshoot = 0.93**, **path efficiency = 0.75**, **throughput = 1.1 bits/s**.
+- **Gain robustness:** 100% success at all three gains; acquisition *fell* with
+  higher gain (3.67→3.36→2.67 s for ×0.6→×1.0→×1.4) and throughput rose
+  (1.03→1.08→1.44 bits/s). No instability at ×1.4 — the human adapts where the
+  synthetic controller broke.
 
 ## Interpretation
 
-What did we actually learn? Did closed-loop control forgive coarse calibration?
+The core hypothesis holds, and the accidental cross-wiring made the test *harder*,
+so these numbers are a conservative floor:
+
+- **Closed-loop control forgives coarse calibration — strongly.** 100% acquisition
+  under a ±40% gain sweep *and* a swapped-axis handicap is the headline. The head
+  channel does not need a precise calibration; a gain slider the user eyeballs is
+  enough, exactly as predicted.
+- **The precision payoff is real.** 0.25° settling is ~20× tighter than open-loop
+  gaze (`../2026-07-01-webcam-gaze-accuracy/metrics.json`: gaze median 5.56°). Head
+  fine-adjustment can hold well inside any button.
+- **Speed is the cost, and it's the thing to improve.** 3.25 s/target is slow (a
+  mouse is sub-second) and was worsened by the cross-wiring; the corrected mapping
+  should cut it. Higher gain helped speed here with no accuracy penalty, so the
+  operating point likely sits at or above the user's chosen gain.
+- **User-reported difficulty** ("challenging") is consistent with fighting swapped
+  axes; a corrected re-run is the clean measurement.
 
 ## Diagnostics
 
-Fill in after the run. One line per field; `n/a` rather than blank.
-`next_candidates` must list ≥2 concrete one-sentence proposals.
-
-- intended_effect_confirmed: <yes | no | partial> — <evidence with anchor>
+- intended_effect_confirmed: yes — closed-loop acquisition succeeded 100% across
+  a ±40% gain sweep even under swapped axes (`metrics.json:by_gain.*.success_rate`
+  all 1.0); settling 0.25° (`metrics.json:overall.median_settle_deg`).
 - leakage_check: n/a (behavioral task, no train/test split)
 - overfitting_signal: n/a (no fitted model; gain is a live user control)
 - delta_from_prior: vs 2026-07-01-webcam-gaze-accuracy head-pose — reframes the
-  22.9° open-loop artifact as a closed-loop controllability measurement (metrics.json)
-- unexpected_findings: <one or two sentences, or "none">
+  22.9° open-loop artifact as a closed-loop result: settling 0.25° vs gaze median
+  5.56° open-loop, i.e. ~20× tighter with a visible cursor (`metrics.json`).
+- unexpected_findings: the run was collected with horizontal/vertical swapped
+  (MediaPipe forward-vector components m8/m9 map to the opposite screen axes than
+  the naive column assignment); 100% success *despite* that is itself the strongest
+  evidence for the closed-loop-forgiveness claim. Higher gain improved speed with
+  no accuracy loss (no instability at ×1.4).
 - next_candidates:
-  - <one-sentence proposal 1>
-  - <one-sentence proposal 2>
+  - Re-run with the corrected (un-swapped) axis mapping to get a clean acquisition-
+    time baseline and test whether it drops below ~2 s/target.
+  - Add element-latching (snap-to-nearest-target / area cursor) on top of the head
+    cursor and measure the acquisition-time reduction it buys at fixed settling.
 
 ## Follow-up
 

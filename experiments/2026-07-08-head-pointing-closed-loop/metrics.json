@@ -1,1 +1,55 @@
-{}
+{
+  "overall": {
+    "n_trials": 30,
+    "success_rate": 1.0,
+    "median_acquire_ms": 3252.2,
+    "median_settle_px": 9.097,
+    "median_settle_deg": 0.25,
+    "median_settle_cm": 0.283,
+    "mean_overshoot": 0.933,
+    "median_path_eff": 0.752,
+    "median_throughput_bps": 1.117
+  },
+  "by_gain": {
+    "gain_x0.6": {
+      "n_trials": 10,
+      "success_rate": 1.0,
+      "median_acquire_ms": 3674.55,
+      "median_settle_px": 8.98,
+      "median_settle_deg": 0.246,
+      "median_settle_cm": 0.28,
+      "mean_overshoot": 1.0,
+      "median_path_eff": 0.791,
+      "median_throughput_bps": 1.03
+    },
+    "gain_x1": {
+      "n_trials": 10,
+      "success_rate": 1.0,
+      "median_acquire_ms": 3359.45,
+      "median_settle_px": 9.728,
+      "median_settle_deg": 0.267,
+      "median_settle_cm": 0.303,
+      "mean_overshoot": 1.1,
+      "median_path_eff": 0.723,
+      "median_throughput_bps": 1.083
+    },
+    "gain_x1.4": {
+      "n_trials": 10,
+      "success_rate": 1.0,
+      "median_acquire_ms": 2674.9,
+      "median_settle_px": 8.831,
+      "median_settle_deg": 0.242,
+      "median_settle_cm": 0.275,
+      "mean_overshoot": 0.7,
+      "median_path_eff": 0.772,
+      "median_throughput_bps": 1.444
+    }
+  },
+  "meta": {
+    "session": "hpsession_web_20260708-151320",
+    "n_trials_raw": 30,
+    "viewing_distance_mm": 650.0,
+    "dwell_ms": 600,
+    "generated": "2026-07-08T15:13:20"
+  }
+}
