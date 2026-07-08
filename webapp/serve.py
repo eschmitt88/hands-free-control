@@ -385,6 +385,11 @@ def fusion_wg_index() -> FileResponse:
     return FileResponse(os.path.join(STATIC_DIR, "fusion_wg.html"))
 
 
+@app.get("/gestures")
+def gestures_index() -> FileResponse:
+    return FileResponse(os.path.join(STATIC_DIR, "gestures.html"))
+
+
 @app.get("/api/fusion_config")
 def api_fusion_config() -> dict:
     cfg = _load_yaml(CONFIG3_YAML)
