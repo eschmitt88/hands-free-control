@@ -1,0 +1,46 @@
+# Inputs / parameters for the closed-loop head-pointing task.
+seed: 42
+
+task:
+  # Per-target: normalized position + acceptance radius (px). Multidirectional
+  # (ISO 9241-9-style) ordering so consecutive targets cross the workspace,
+  # with two acceptance sizes to sample the speed/accuracy (Fitts) tradeoff.
+  targets:
+    - {pos: [0.50, 0.50], radius_px: 40}
+    - {pos: [0.85, 0.50], radius_px: 40}
+    - {pos: [0.15, 0.50], radius_px: 40}
+    - {pos: [0.50, 0.15], radius_px: 40}
+    - {pos: [0.50, 0.85], radius_px: 40}
+    - {pos: [0.80, 0.20], radius_px: 28}
+    - {pos: [0.20, 0.80], radius_px: 28}
+    - {pos: [0.80, 0.80], radius_px: 28}
+    - {pos: [0.20, 0.20], radius_px: 28}
+    - {pos: [0.50, 0.50], radius_px: 24}
+  timeout_ms: 8000        # per target; scored as a miss if not acquired in time
+
+dwell:
+  dwell_ms: 600           # cursor must stay within the target's radius this long to lock
+
+control:
+  neutral_capture_ms: 1000
+  smoothing_alpha: 0.5    # EMA on head yaw/pitch; 1.0 = raw, lower = smoother
+  invert_pitch: false     # flip if looking up moves the cursor down
+  # Head yaw->cursor_x, pitch->cursor_y sensitivity. The user sets this live with
+  # a slider (the whole "size calibration"); this is the starting value.
+  default_gain_px_per_rad: 4000
+  gain_slider_min: 1000
+  gain_slider_max: 9000
+
+robustness:
+  # The target sequence repeats at each multiplier of the user's chosen gain, to
+  # test whether closed-loop correction forgives an imprecise gain calibration.
+  gain_multipliers: [0.6, 1.0, 1.4]
+
+# Physical geometry (px/mm + viewing distance). Overridden per session by the
+# browser-measured values in the session meta.json, mirroring the gaze experiment.
+screen:
+  width_px: 1920
+  height_px: 1080
+  width_mm: 598
+  height_mm: 336
+viewing_distance_mm: 650

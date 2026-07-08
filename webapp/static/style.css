@@ -158,3 +158,25 @@ thead th { background: #0d1116; color: var(--muted); }
   max-width: 520px;
   text-align: center;
 }
+
+/* ---------- head-pointing calibration (headpoint.html) ---------- */
+.calib {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.calib .steps { margin: 8px 0 14px; padding-left: 20px; color: var(--muted); }
+.calib .steps li { margin: 6px 0; }
+.gain-label { display: block; margin: 10px 0; font-size: 14px; }
+.gain-label input[type="range"] { width: 100%; margin-top: 6px; accent-color: var(--accent); }
+.invert { display: block; margin: 6px 0; color: var(--muted); font-size: 14px; }
+.invert input { margin-right: 6px; }
+#preview-stage-wrap { margin-top: 12px; }
+#preview-stage {
+  width: 100%;
+  max-width: 480px;
+  background: #0b0e12;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  display: block;
+}

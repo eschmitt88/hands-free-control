@@ -24,7 +24,14 @@ See `literature/` and the four candidate triage files in `raw/_candidates/`.
 
 - `experiments/2026-07-01-webcam-gaze-accuracy/` — characterize gaze + head-pose
   accuracy on the user's webcam (°-error, dwell false-activation). **HCE-scoped**
-  (has `splits.yaml`). status: running (blocked on workstation data collection).
+  (has `splits.yaml`). status: running. First real session in: gaze median 5.56°
+  (coarse, as predicted); head-pose number is a head-still confound (see its
+  Diagnostics) — motivated the closed-loop experiment below.
+- `experiments/2026-07-08-head-pointing-closed-loop/` — measure the head channel
+  the way it's actually used: a visible head-driven cursor, closed-loop target
+  acquisition (acquisition time / settling / gain-robustness), not open-loop
+  angular error. Webapp mode `/headpoint`. Not HCE-scoped (behavioral task).
+  status: running (harness + synth self-check green; awaiting real session).
 
 ## Open questions
 

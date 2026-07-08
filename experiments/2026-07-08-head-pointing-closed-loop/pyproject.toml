@@ -1,0 +1,12 @@
+[project]
+name = "head-pointing-closed-loop"
+version = "0.1.0"
+description = "Closed-loop head-pointing target-acquisition analysis (headless)."
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.26",
+    "pyyaml>=6.0",
+]
+
+[tool.uv]
+package = false

@@ -1,0 +1,9 @@
+---
+title: "Head-pointing closed-loop — analysis"
+format: html
+---
+
+```{python}
+# Analysis of results/hpsession_web_*/trials.jsonl -> metrics.json.
+# Populated after the first real session.
+```
