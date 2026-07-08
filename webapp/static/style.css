@@ -221,3 +221,20 @@ thead th { background: #0d1116; color: var(--muted); }
 
 /* tune-panel select (headmouse wink method) */
 .tune-panel select { width: 100%; background: #0b0e12; color: var(--ink); border: 1px solid var(--border); border-radius: 6px; padding: 3px 6px; margin-top: 2px; font-size: 12px; }
+
+/* ---------- voice command demo ---------- */
+.vc-targets { display: flex; gap: 14px; flex-wrap: wrap; margin: 14px 0; }
+.vc-target { width: 58px; height: 58px; border-radius: 50%; border: 3px solid var(--c);
+  display: flex; align-items: center; justify-content: center; background: color-mix(in srgb, var(--c) 12%, transparent); }
+.vc-target.lit { background: var(--c); }
+.vc-num { font-weight: 700; color: var(--ink); }
+.vc-target.lit .vc-num { color: #0b0e12; }
+.vc-row { display: flex; gap: 16px; flex-wrap: wrap; margin: 8px 0 4px; }
+.vc-scroll { width: 220px; height: 160px; overflow-y: auto; background: #0b0e12; border: 1px solid var(--border); border-radius: 8px; }
+.vc-item { padding: 8px 12px; border-bottom: 1px solid #161b22; color: var(--muted); font-size: 13px; }
+.vc-dictate { flex: 1; min-width: 220px; display: flex; flex-direction: column; gap: 4px; }
+.vc-dictate textarea { background: #0b0e12; color: var(--ink); border: 1px solid var(--border); border-radius: 8px; padding: 8px; font: inherit; resize: vertical; }
+.vc-log { display: flex; flex-direction: column; gap: 4px; }
+.vc-logrow { font-size: 12px; padding: 5px 8px; background: var(--panel); border: 1px solid var(--border); border-radius: 6px; }
+.vc-utt { color: var(--ink); } .vc-arrow { color: var(--muted); }
+.vc-logrow code { color: var(--accent); } .vc-note { color: var(--good); margin-left: 6px; }
