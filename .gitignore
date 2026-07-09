@@ -34,3 +34,7 @@ webapp/certs/
 # vendored MediaPipe model/wasm — fetched at first service start
 webapp/static/vendor/
 # web-collected sessions land in the experiment results dir (handled there)
+
+# native app: per-user tuning + auto-downloaded face model
+app/tune.json
+app/models/

@@ -127,3 +127,33 @@ SessionEnd hook backstops this if you forget.
   REAL OS cursor, fuse head+gestures+voice, and enable named targeting by reading the
   actual screen. Runs on the Windows workstation (not aiserver); needs Python setup there.
 - Voice polish (only if used): fast local grammar for common commands + Whisper for privacy.
+
+### Did (native app — first cut)
+- **Wrote the native head-mouse app** at `app/headmouse.py`: faithful port of the
+  `/headmouse` browser prototype driving the REAL Windows cursor via `pynput`. OpenCV
+  replaces getUserMedia, MediaPipe Python Tasks API replaces tasks-vision, pynput replaces
+  the canvas. Ported verbatim: OneEuro filter, adaptive differential WinkDetector,
+  relative-anchor clutch, smile-drag (real left-button press/release), brow-scroll.
+  Tuning defaults = the values the user converged on (gain 1200, spike wink @ rate 1.5,
+  inverts ON). Byte-compiles clean.
+- **Native-Windows tooling**: `app/setup.ps1` (uv → Python 3.12 → deps),
+  `requirements.txt`, `README.md`. `tune.json` + `models/` gitignored.
+- **Safety-first UX**: app STARTS PAUSED; global hotkeys (Ctrl+Alt+P/R/Q) work regardless
+  of focus so the cursor is never grabbed unasked and there's always an off switch.
+  First-run calibration hotkeys: Ctrl+Alt+Y/U flip yaw/pitch, X swaps axes (insurance
+  against a MediaPipe matrix row/col-major mismatch I can't smoke-test on aiserver).
+
+### Findings (native app)
+- **WSL is the wrong runtime** — decided and documented: WSL2 can neither inject events
+  into the Windows desktop (pynput would target the Linux sandbox) nor reliably reach the
+  USB webcam. Native Windows Python (uv or python.org, 3.11/3.12) is required. Both of the
+  app's core needs are exactly what WSL isolates.
+- Can't end-to-end verify here (no webcam / not Windows). Static check only (py_compile).
+  Build-and-iterate: user runs locally, reports, I adjust. The axis-swap + invert hotkeys
+  make first-run mismatches self-correctable without a code round-trip.
+
+### Next (native app)
+- User runs `app/setup.ps1` + `uv run python headmouse.py` on Windows; iterate on feel
+  (axis/invert calibration, gain, scroll cadence) from the report.
+- Then: multi-monitor bounds (currently clamped to primary), and wire the voice/LLM-intent
+  leg into the native app (+ local Whisper).
