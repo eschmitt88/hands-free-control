@@ -1,0 +1,6 @@
+# Native Windows head-mouse app. Python 3.11 or 3.12 (MediaPipe ships Windows
+# wheels for these; 3.13 may not yet).
+mediapipe>=0.10.20
+opencv-python>=4.9
+pynput>=1.7.6
+numpy>=1.26,<2.3
