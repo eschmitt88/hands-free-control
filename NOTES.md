@@ -100,3 +100,30 @@ SessionEnd hook backstops this if you forget.
   browser can't inject OS events. Port the MediaPipe detection + control logic.
 - Finish the vocabulary: smile → drag-lock, brows up/down → scroll.
 - Optional polish: rate-of-rise term in the wink detector; verify L/R wink labels.
+
+## 2026-07-09
+
+### Did
+- **Completed + tuned the gesture vocabulary** (`/headmouse`): head-point + jaw-clutch
+  (relative ratchet) + spike wink-click (onset-rate detector, user-preferred) +
+  smile-drag + brow-scroll. Fixed gesture-motion coupling: freeze the cursor during
+  a smile (the smile dips the head) and re-anchor on release. All gestures decoupled
+  from each other's incidental head motion.
+- **Voice leg (`/voice`).** Web Speech transcription → `/api/voice_intent` → `claude -p`
+  LLM intent parse → action on a demo surface. Natural refs resolve ("the green one"→#2,
+  "number five"→#5), out-of-scope → none. No API billing (CLI shell-out).
+- Fixed a stuck-webcam bug: release camera (stream tracks / webgazer.end) on `pagehide`
+  across all camera pages.
+
+### Findings
+- **All three channels now work as prototypes**: head+gestures (continuous control),
+  voice+LLM-intent (symbolic commands). Head+gestures is the primary system; voice is
+  a secondary fallback whose real value is text entry + named targeting.
+- Adaptive/relative detectors beat static thresholds everywhere (wink asymmetry-vs-baseline,
+  spike onset-rate; smile-activity cursor-freeze) — the recurring lesson of the project.
+
+### Next
+- **Native workstation app** (Python + mediapipe + pynput) — the finish line: drive the
+  REAL OS cursor, fuse head+gestures+voice, and enable named targeting by reading the
+  actual screen. Runs on the Windows workstation (not aiserver); needs Python setup there.
+- Voice polish (only if used): fast local grammar for common commands + Whisper for privacy.
