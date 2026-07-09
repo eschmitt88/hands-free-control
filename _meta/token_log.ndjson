@@ -657,3 +657,94 @@
   "cache_creation_tokens": 0,
   "tools_used_summary": {}
 }
+{
+  "timestamp": "2026-07-08T21:06:54Z",
+  "session_id": "7bf5818c-05a8-4437-98bf-2b2e6f40cdc8",
+  "input_tokens": 137852,
+  "output_tokens": 1531049,
+  "cache_read_tokens": 163883356,
+  "cache_creation_tokens": 4429585,
+  "tools_used_summary": {
+    "AskUserQuestion": 5,
+    "Skill": 5,
+    "Bash": 119,
+    "Agent": 17,
+    "Write": 37,
+    "Edit": 102,
+    "Read": 24,
+    "ToolSearch": 1,
+    "SendMessage": 2
+  }
+}
+{
+  "timestamp": "2026-07-09T01:38:02Z",
+  "session_id": "edbda14b-d22c-45a5-baac-a52e0b5b9e3f",
+  "input_tokens": 0,
+  "output_tokens": 0,
+  "cache_read_tokens": 0,
+  "cache_creation_tokens": 0,
+  "tools_used_summary": {}
+}
+{
+  "timestamp": "2026-07-09T01:38:15Z",
+  "session_id": "fe92fa08-4eeb-412e-88e2-5f433bb46774",
+  "input_tokens": 0,
+  "output_tokens": 0,
+  "cache_read_tokens": 0,
+  "cache_creation_tokens": 0,
+  "tools_used_summary": {}
+}
+{
+  "timestamp": "2026-07-09T01:38:35Z",
+  "session_id": "7125a116-6dd9-4831-93c1-aa97c4665481",
+  "input_tokens": 0,
+  "output_tokens": 0,
+  "cache_read_tokens": 0,
+  "cache_creation_tokens": 0,
+  "tools_used_summary": {}
+}
+{
+  "timestamp": "2026-07-09T01:40:40Z",
+  "session_id": "469792ee-01f8-4145-97b3-85d65d17c650",
+  "input_tokens": 0,
+  "output_tokens": 0,
+  "cache_read_tokens": 0,
+  "cache_creation_tokens": 0,
+  "tools_used_summary": {}
+}
+{
+  "timestamp": "2026-07-09T01:41:41Z",
+  "session_id": "3071c14a-ebcd-44a1-b1f9-d83df17b696d",
+  "input_tokens": 0,
+  "output_tokens": 0,
+  "cache_read_tokens": 0,
+  "cache_creation_tokens": 0,
+  "tools_used_summary": {}
+}
+{
+  "timestamp": "2026-07-09T01:42:11Z",
+  "session_id": "81c16c32-a4b5-471c-8cd9-13cab112f777",
+  "input_tokens": 0,
+  "output_tokens": 0,
+  "cache_read_tokens": 0,
+  "cache_creation_tokens": 0,
+  "tools_used_summary": {}
+}
+{
+  "timestamp": "2026-07-09T01:42:21Z",
+  "session_id": "47449321-c3ef-406d-9086-981c863e2480",
+  "input_tokens": 0,
+  "output_tokens": 0,
+  "cache_read_tokens": 0,
+  "cache_creation_tokens": 0,
+  "tools_used_summary": {}
+}
+{
+  "timestamp": "2026-07-09T01:42:39Z",
+  "session_id": "7119468c-305d-487b-8273-688e5f76d347",
+  "input_tokens": 0,
+  "output_tokens": 0,
+  "cache_read_tokens": 0,
+  "cache_creation_tokens": 0,
+  "tools_used_summary": {}
+}
