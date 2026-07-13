@@ -148,6 +148,8 @@ class WinkDetector:
     def __init__(self, tune: Tune):
         self.t = tune
         self.reset()
+        # live diagnostics (for the debug HUD)
+        self.dbg = {"bl": 0.0, "br": 0.0, "d": 0.0, "dev": 0.0, "rate": 0.0}
 
     def reset(self) -> None:
         self.base_d = 0.0
@@ -167,6 +169,7 @@ class WinkDetector:
             rate = (d - self.prev_d) / dt
         self.prev_d = d
         self.prev_t = now
+        self.dbg = {"bl": bl, "br": br, "d": d, "dev": dev, "rate": rate}
 
         level_l = dev > t.wink_margin and bl > t.wink_abs_min
         level_r = -dev > t.wink_margin and br > t.wink_abs_min
@@ -323,6 +326,9 @@ class HeadMouse:
         self.dragging = False
         self.scroll_accum = 0.0
         self.last_ts = 0
+        self.debug = True            # start with the diagnostic HUD on
+        self.fps = 0.0
+        self._last_frame_t: float | None = None
 
     # -- hotkeys ------------------------------------------------------------- #
     def _install_hotkeys(self) -> keyboard.GlobalHotKeys:
@@ -354,6 +360,10 @@ class HeadMouse:
             self.t.save(self.tune_path)
             print(f"[headmouse] swap_axes = {self.t.swap_axes}")
 
+        def toggle_debug():
+            self.debug = not self.debug
+            print(f"[headmouse] debug HUD = {self.debug}")
+
         hk = keyboard.GlobalHotKeys({
             "<ctrl>+<alt>+p": toggle_pause,
             "<ctrl>+<alt>+r": recenter,
@@ -361,6 +371,7 @@ class HeadMouse:
             "<ctrl>+<alt>+y": flip_yaw,
             "<ctrl>+<alt>+u": flip_pitch,
             "<ctrl>+<alt>+x": swap_axes,
+            "<ctrl>+<alt>+d": toggle_debug,
         })
         hk.start()
         return hk
@@ -492,16 +503,39 @@ class HeadMouse:
         color = (60, 200, 60) if not self.state.paused else (60, 60, 220)
         face_txt = "face ✓" if f else "no face"
         lines = [
-            f"{status}  {mode}",
+            f"{status}  {mode}  {self.fps:.0f}fps",
             f"{face_txt}  gain={int(self.t.gain)}",
             "Ctrl+Alt: P pause  R recenter  Q quit",
-            "         Y/U flip yaw/pitch  X swap",
+            "         Y/U flip  X swap  D debug",
         ]
         y = 22
         for i, ln in enumerate(lines):
             cv2.putText(small, ln, (10, y), cv2.FONT_HERSHEY_SIMPLEX,
                         0.5, color if i == 0 else (230, 230, 230), 1, cv2.LINE_AA)
             y += 22
+
+        if self.debug and f is not None:
+            b = f.bs
+            has_bs = bool(b)
+            dw = self.wink.dbg
+            smile = (b.get("mouthSmileLeft", 0.0) + b.get("mouthSmileRight", 0.0)) / 2.0
+            brow_up = max(b.get("browInnerUp", 0.0), b.get("browOuterUpLeft", 0.0),
+                          b.get("browOuterUpRight", 0.0))
+            brow_dn = (b.get("browDownLeft", 0.0) + b.get("browDownRight", 0.0)) / 2.0
+            dbg_lines = [
+                f"blendshapes: {'YES' if has_bs else 'NONE!'} ({len(b)})",
+                f"blinkL {b.get('eyeBlinkLeft',0):.2f}  blinkR {b.get('eyeBlinkRight',0):.2f}",
+                f"wink d {dw['d']:+.2f} dev {dw['dev']:+.2f} rate {dw['rate']:+.1f}",
+                f"  need |dev|>{self.t.wink_margin:.2f} eye>{self.t.wink_abs_min:.2f} rate>{self.t.wink_rate:.1f}",
+                f"jawOpen {b.get('jawOpen',0):.2f}  smile {smile:.2f}",
+                f"browUp {brow_up:.2f}  browDn {brow_dn:.2f}",
+            ]
+            yy = small.shape[0] - 12 * len(dbg_lines) - 6
+            for ln in dbg_lines:
+                cv2.rectangle(small, (6, yy - 11), (6 + 9 * len(ln), yy + 3), (0, 0, 0), -1)
+                cv2.putText(small, ln, (8, yy), cv2.FONT_HERSHEY_SIMPLEX,
+                            0.4, (120, 230, 255), 1, cv2.LINE_AA)
+                yy += 14
         cv2.imshow("headmouse (preview)", small)
 
     # -- main loop ----------------------------------------------------------- #
@@ -528,9 +562,18 @@ class HeadMouse:
                 if not ok:
                     continue
                 now = time.perf_counter()
+                if self._last_frame_t is not None:
+                    dt = now - self._last_frame_t
+                    if dt > 0:
+                        self.fps = 0.9 * self.fps + 0.1 * (1.0 / dt)
+                self._last_frame_t = now
                 f = self._detect(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
                 if self.state.paused:
                     mode = "paused"
+                    # keep wink diagnostics live so we can watch values safely
+                    if f is not None:
+                        self.wink.detect(f.bs.get("eyeBlinkLeft", 0.0),
+                                         f.bs.get("eyeBlinkRight", 0.0), now)
                 else:
                     mode = self._step(f, now)
                 self._preview(frame, f, mode)
