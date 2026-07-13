@@ -38,3 +38,7 @@ webapp/static/vendor/
 # native app: per-user tuning + auto-downloaded face model
 app/tune.json
 app/models/
+
+# Hook telemetry — appended by the Stop hook after every turn, so it can
+# never stay committed-clean. Durable copy lives in ~/.claude/state.db.
+_meta/token_log.ndjson
