@@ -52,13 +52,13 @@ State precisely what we expect, before running anything:
 The collector is served as a webapp (see `../../webapp/`), so the workstation just
 opens a URL — no Python/MediaPipe install. On the machine with the webcam:
 
-1. Open **https://<build-server>:8104/** (or `https://<tailnet-IP>:8104/`). The cert is
-   trusted by any device that already trusts the <other-project> rootCA (e.g. <reviewer-desktop>).
+1. Open **https://<build-server>:8104/**. The cert is trusted by any device
+   that already trusts the local rootCA.
 2. On the pre-flight screen: allow the camera, confirm a face is detected, enter your
    **physical screen size + viewing distance** (used for the °-error conversion).
 3. Click Start → fullscreen → look at each dot (calibration → validation → test).
 4. Results (validation gaze/head error in ° and cm, dwell false-activation) render in
-   the browser. Data is saved on aiserver at
+   the browser. Data is saved on the build server at
    `results/session_web_<ts>/` and scored by this experiment's `analyze.py`
    (validation only; **test stays held out** for the final pass).
 
@@ -72,7 +72,7 @@ uv run python collect.py         # sit ~60 cm away; look at each dot, press spac
 uv run python analyze.py         # writes metrics.json (validation)
 ```
 
-The analysis (`analyze.py`, `synth.py`) runs headless on <build-server>; `synth.py
+The analysis (`analyze.py`, `synth.py`) runs headless on the build server; `synth.py
 --selfcheck` validates the metric math with no webcam.
 
 ## Result

@@ -80,7 +80,7 @@ method against this task, it must introduce a split then (and an ADR).
 4. Click Start → fullscreen → drive the cursor into each highlighted target and
    hold until it locks. The task sweeps a few gain multipliers around your
    chosen gain to measure robustness.
-5. Metrics render in the browser and are saved on aiserver; `analyze_headpoint.py`
+5. Metrics render in the browser and are saved on the build server; `analyze_headpoint.py`
    scores them server-side.
 
 ## Result
