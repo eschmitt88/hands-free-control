@@ -10,7 +10,7 @@ metrics.json). Test samples are stored on disk for a later manual final pass but
 NEVER read server-side (HCE rule, ~/.claude/rules/evaluation.md).
 
 Serves over HTTPS on :8104 (getUserMedia requires a secure context). Mirrors the
-user's other aiserver FastAPI viewers.
+user's other FastAPI viewers on the build server.
 """
 
 from __future__ import annotations

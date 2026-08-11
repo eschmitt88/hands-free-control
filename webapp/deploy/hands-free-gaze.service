@@ -6,7 +6,7 @@ Wants=network-online.target
 [Service]
 Type=simple
 WorkingDirectory=/mnt/projects/research/hands-free-control/webapp
-ExecStart=/home/eschmitt/.local/bin/uv run python serve.py
+ExecStart=%h/.local/bin/uv run python serve.py
 Restart=on-failure
 RestartSec=3
 

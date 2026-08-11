@@ -47,7 +47,7 @@ SessionEnd hook backstops this if you forget.
   proving the metric math + calibration before any real session. Two real bugs
   fixed en route: Ridge scale-shrinkage (→ StandardScaler pipeline) and
   errors-in-variables attenuation from noisy calibration.
-- **BLOCKED ON USER:** <build-server> is headless and its `/dev/video0` is the HDMI
+- **BLOCKED ON USER:** The build server is headless and its `/dev/video0` is the HDMI
   capture card, not a webcam. The collection session must run on the user's
   workstation (cam above monitor). Steps are in the experiment README.
 - On session data: run `analyze.py` → `metrics.json` (validation); `analyze.py
@@ -55,12 +55,12 @@ SessionEnd hook backstops this if you forget.
 
 ### Update — collection moved to a webapp (no desktop install)
 - User asked for a webapp instead of a local install. Built `webapp/`: FastAPI on
-  aiserver:8104 (HTTPS) serving an **in-browser MediaPipe FaceLandmarker** collector;
+  the build server, port 8104 (HTTPS) serving an **in-browser MediaPipe FaceLandmarker** collector;
   webcam capture happens in the desktop browser, samples POST back, and the
   experiment's validated `analyze.py` scores them server-side (validation only; test
   held out — HCE preserved).
-- TLS via a cert signed by the **<other-project> local CA** (already trusted on
-  <reviewer-desktop>) — SANs cover <build-server> / tailnet / LAN; no new import, no sudo.
+- TLS via a cert signed by the local CA (already trusted on the reviewer
+  desktop) — SANs cover hostname / tailnet / LAN; no new import, no sudo.
 - Systemd `--user` unit `hands-free-gaze.service` (enabled, linger on); port 8104
   registered in `~/claude-system/registry/services.yaml`.
 - **Smoke-tested over real HTTPS**: /healthz, /api/config (splits 9/16/5), page load,
@@ -125,7 +125,7 @@ SessionEnd hook backstops this if you forget.
 ### Next
 - **Native workstation app** (Python + mediapipe + pynput) — the finish line: drive the
   REAL OS cursor, fuse head+gestures+voice, and enable named targeting by reading the
-  actual screen. Runs on the Windows workstation (not aiserver); needs Python setup there.
+  actual screen. Runs on the Windows workstation (not the build server); needs Python setup there.
 - Voice polish (only if used): fast local grammar for common commands + Whisper for privacy.
 
 ### Did (native app — first cut)
@@ -141,7 +141,7 @@ SessionEnd hook backstops this if you forget.
 - **Safety-first UX**: app STARTS PAUSED; global hotkeys (Ctrl+Alt+P/R/Q) work regardless
   of focus so the cursor is never grabbed unasked and there's always an off switch.
   First-run calibration hotkeys: Ctrl+Alt+Y/U flip yaw/pitch, X swaps axes (insurance
-  against a MediaPipe matrix row/col-major mismatch I can't smoke-test on aiserver).
+  against a MediaPipe matrix row/col-major mismatch I can't smoke-test on the build server).
 
 ### Findings (native app)
 - **WSL is the wrong runtime** — decided and documented: WSL2 can neither inject events
