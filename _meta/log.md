@@ -32,3 +32,4 @@ skills; read by `/lint`.
 2026-08-20 curate 2026-07-01-consumer-eeg-bci.md ingested=0 declined=0 dup=10
 2026-08-20 curate 2026-07-01-multimodal-gaze-voice.md ingested=0 declined=0 dup=10
 2026-08-20 curate 2026-07-01-voice-ai-command-control.md ingested=0 declined=0 dup=10
+2026-08-20 curate 2026-07-01-webcam-gaze-eye-tracking.md ingested=0 declined=0 dup=10
