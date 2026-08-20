@@ -2,6 +2,7 @@
 kind: candidates
 topic: "non-invasive consumer EEG / BCI for computer control (dry-electrode headbands, no shave; honest viability assessment)"
 discovered: 2026-07-01
+curated: 2026-08-20
 source: discover
 n_requested: 10
 n_returned: 10
@@ -76,3 +77,20 @@ n_returned: 10
 - type: docs
 - summary: Official announcement of Snap's 2022 acquisition of NextMind, whose $399 dry headband decoded visual-cortex VEPs for cursor/selection control before hardware sales and the dev portal were shut down.
 - reason: Cautionary primary record — the most polished consumer VEP control product was absorbed and killed, showing the commercial modality is immature and its best IP is now locked inside an AR roadmap.
+
+## Curation
+
+curated 2026-08-20 — every item checked against `literature/**` by URL.
+All items were already ingested by the 2026-07-01 survey pass, so this
+file is a bookkeeping close: 0 ingested, 0 declined, all dup.
+
+- 1. A Review of Brain-Computer Interface Technologies: Signal Acquisition Methods and Interaction Paradigms — already in graph → `bci-signal-acquisition-review-2025`
+- 2. Consumer-grade EEG devices: are they usable for control tasks? — already in graph → `consumer-eeg-usability-2016`
+- 3. Recent Advances in Portable Dry Electrode EEG: Architecture and Applications in BCIs — already in graph → `dry-electrode-eeg-review-2025`
+- 4. Design and Quantitative Evaluation of an Embedded EEG Platform for Real-Time SSVEP Decoding — already in graph → `embedded-ssvep-decoding-2026`
+- 5. Advancing Boggle — Taking BCI Web-Browsing Out of the Lab — already in graph → `boggle-bci-browser-2025`
+- 6. A High-Speed SSVEP-Based BCI Using Dry EEG Electrodes — already in graph → `high-speed-dry-ssvep`
+- 7. OpenBCI_GUI (Cyton / Ganglion) — already in graph → `openbci-gui`
+- 8. Motor imagery-based BCI: multiclass control for Emotiv EPOC X — already in graph → `emotiv-motor-imagery-2025`
+- 9. P300 with the Muse EEG headband — already in graph → `muse-p300`
+- 10. Snap x NextMind (visual-cortex neural interface, discontinued) — already in graph → `snap-nextmind`
