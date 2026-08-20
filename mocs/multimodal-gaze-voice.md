@@ -56,6 +56,13 @@ pattern in the current literature (CHI 2026 gaze+speech scoping review).
   infrequent triggers (toggling modes); it fatigues when repeated per-object
   (a caution from Eyes-on-Many 2026).
 
+## Who it's for
+
+- [[assistive-hands-free-access]] — the motivating population: users who cannot
+  use their hands, whose needs set the reliability bar for this design.
+- [[human-centered-interface-design]] — design around what those users actually
+  want, not metrics that don't translate to usability.
+
 ## Why this is the spine
 
 For an able-bodied user with a webcam and a mic, the buildable, evidence-backed

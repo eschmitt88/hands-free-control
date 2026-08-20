@@ -42,6 +42,25 @@ more stable on a commodity camera. Both feed the same downstream selection logic
   head/face instead of the eyes; the proven assistive path.
 - [[assistive-pointing-device]] — the class these belong to.
 
+## Closed-loop control & the gaze-head handoff
+
+Added 2026-07-08 from this project's own experiments, not the survey — the
+reframe that head pointing is a *control* problem, not an *estimation* problem.
+
+- [[closed-loop-control]] — the user sees the cursor and corrects continuously,
+  so the input→cursor mapping need not be accurate
+  (`experiments/2026-07-08-head-pointing-closed-loop`: 100% acquisition across a
+  ±40% gain sweep, 0.25° settling). This is why the calibration section above
+  matters far less for head than for gaze.
+- [[gain-calibration]] — under closed-loop control, the *only* calibration head
+  pointing needs: one eyeballed slider (~1000 px/rad).
+- [[vestibulo-ocular-reflex]] — the physiology that makes gaze and head
+  *separable* signals: fixate and move your head, and the gaze point stays put
+  while head pose changes. Basis for the head-gated auto-warp handoff in
+  `experiments/2026-07-08-gaze-head-fusion`.
+- [[area-cursor]] — target gravity / element latching, so a coarse pointer only
+  has to land in a target's basin. The next lever once the handoff feels right.
+
 ## Selection from a coarse pointer
 
 - [[gaze-cursor-positioning]] · [[dwell-click]] — the naive path (and why dwell
