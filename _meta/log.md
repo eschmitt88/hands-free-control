@@ -29,3 +29,4 @@ skills; read by `/lint`.
 2026-07-09 01:42 session_end session=7119468c-305d-487b-8273-688e5f76d347
 2026-07-09 14:34 session_end session=7bf5818c-05a8-4437-98bf-2b2e6f40cdc8
 2026-07-13 01:46 session_end session=7bf5818c-05a8-4437-98bf-2b2e6f40cdc8
+2026-08-20 curate 2026-07-01-consumer-eeg-bci.md ingested=0 declined=0 dup=10

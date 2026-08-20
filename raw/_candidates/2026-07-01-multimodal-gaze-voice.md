@@ -2,6 +2,7 @@
 kind: candidates
 topic: "multimodal gaze + voice (and gaze + head) interaction — gaze for coarse pointing, voice for confirmation/commands"
 discovered: 2026-07-01
+curated: 2026-08-20
 source: discover
 n_requested: 10
 n_returned: 10
@@ -76,3 +77,22 @@ n_returned: 10
 - type: paper
 - summary: A 2026 empirical comparison of gaze, hand, and voice (and combinations) for selecting multiple objects, quantifying trade-offs in speed, accuracy, and effort across the modalities.
 - reason: Recent controlled evidence on when voice complements gaze for selection, useful for designing and benchmarking the project's confirmation strategy.
+
+## Curation
+
+curated 2026-08-20 — every item checked against `literature/**` by URL.
+All items were already ingested by the 2026-07-01 survey pass, so this
+file is a bookkeeping close: 0 ingested, 0 declined, all dup.
+
+- 1. Gaze and Speech in Multimodal Human-Computer Interaction: A Scoping Review — already in graph → `gaze-speech-scoping-review-2026`
+- 2. EyeTAP: A Multimodal Gaze-Based Technique Using Voice Inputs — already in graph → `eyetap-2021`
+- 3. Manual and Gaze Input Cascaded (MAGIC) Pointing — already in graph → `magic-pointing-1999`
+- 4. "Put-That-There": Voice and Gesture at the Graphics Interface — already in graph → `put-that-there-1980`
+- 5. VoxVisio — Combining Gaze and Speech for Accessible HCI — already in graph → `voxvisio-2016`
+- 6. GazePointAR: A Context-Aware Multimodal Voice Assistant for Pronoun Disambiguation — already in graph → `gazepointar-2024`
+- 7. Eye-Tracking and Voice Command Interface for GUI Operation with Disabled Upper Limbs — already in graph → `eyetracking-voice-disabled-limbs-2022`
+- 8. Look & Touch: Gaze-Supported Target Acquisition (Stellmach & Dachselt) — already in graph → `look-and-touch-2012`
+  (candidate URL `doi/pdf/10.1145/1983302.1983303` is wrong and does not resolve to this
+  paper; the note records the correct CHI '12 DOI `10.1145/2207676.2208709`)
+- 9. GAVIN: Gaze-Assisted Voice-Based Implicit Note-taking — already in graph → `gavin-2021`
+- 10. Eyes on Many: Evaluating Gaze, Hand, and Voice for Multi-Object Selection in XR — already in graph → `eyes-on-many-2026`

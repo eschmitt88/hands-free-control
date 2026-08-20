@@ -2,6 +2,7 @@
 kind: candidates
 topic: "webcam-based eye/gaze tracking for cursor control (WebGazer, appearance-based gaze, head-pose alternatives)"
 discovered: 2026-07-01
+curated: 2026-08-20
 source: discover
 n_requested: 10
 n_returned: 10
@@ -76,3 +77,22 @@ n_returned: 10
 - type: repo
 - summary: Cross-platform Python library for programming eye-tracking experiments with online event detection and a unified API across EyeLink, SMI, Tobii, and GazePoint/OpenGaze devices.
 - reason: A useful integration/experiment-harness layer and a baseline reference against dedicated IR trackers when validating webcam-gaze accuracy for control tasks.
+
+## Curation
+
+curated 2026-08-20 — every item checked against `literature/**` by URL.
+All items were already ingested by the 2026-07-01 survey pass, so this
+file is a bookkeeping close: 0 ingested, 0 declined, all dup.
+
+- 1. WebGazer.js: Scalable Webcam Eye Tracking Using User Interactions — already in graph → `webgazer`
+- 2. Eye Tracking for Everyone (GazeCapture / iTracker) — already in graph → `gazecapture-itracker-2016`
+- 3. L2CS-Net: Fine-Grained Gaze Estimation in Unconstrained Environments — already in graph → `l2cs-net-2022`
+- 4. ETH-XGaze: Large-Scale Dataset for Gaze Estimation under Extreme Head Pose — already in graph → `eth-xgaze-2020`
+- 5. MediaPipe Iris: Real-Time Iris Tracking and Depth Estimation — already in graph → `mediapipe-iris`
+- 6. Enable Viacam (eViacam) — already in graph → `eviacam`
+- 7. Camera Mouse — already in graph → `camera-mouse`
+- 8. EMC-Gaze: Deployment-Oriented Session-wise Meta-Calibration for Landmark-Based Webcam Gaze Tracking — already in graph → `emc-gaze-2026`
+- 9. Revolutionizing Gaze-Based HCI Using Iris Tracking: A Webcam-Based Low-Cost Approach with Calibration and Real-Time Re-Calibration — already in graph → `webcam-iris-recalibration-2024`
+  (candidate URL was an ADS mirror; the note uses the canonical IEEE Access page
+  `ieeexplore.ieee.org/document/10752957/`)
+- 10. PyGaze: Open-Source Toolbox for Eye-Tracking Experiments — already in graph → `pygaze`

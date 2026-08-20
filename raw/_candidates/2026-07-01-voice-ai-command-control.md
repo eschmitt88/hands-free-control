@@ -2,6 +2,7 @@
 kind: candidates
 topic: "hands-free computer control via voice commands and LLM/AI intent agents (Talon Voice, Whisper command pipelines, natural-language desktop control)"
 discovered: 2026-07-01
+curated: 2026-08-20
 source: discover
 n_requested: 10
 n_returned: 10
@@ -76,3 +77,20 @@ n_returned: 10
 - type: repo
 - summary: An open-source, modular library for building real-time streaming voice-based LLM agents, composing ASR, LLM, and TTS with interruption handling across multiple deployment targets.
 - reason: Provides reusable streaming-orchestration plumbing (barge-in, turn-taking, low-latency STT↔LLM↔TTS) that a responsive conversational voice-control agent needs beyond a fixed command grammar.
+
+## Curation
+
+curated 2026-08-20 — every item checked against `literature/**` by URL.
+All items were already ingested by the 2026-07-01 survey pass, so this
+file is a bookkeeping close: 0 ingested, 0 declined, all dup.
+
+- 1. Talon Voice — already in graph → `talon-voice`
+- 2. Windows Voice Access (command list & docs) — already in graph → `windows-voice-access`
+- 3. macOS Voice Control — already in graph → `macos-voice-control`
+- 4. Serenade (serenadeai/serenade) — already in graph → `serenade`
+- 5. VoicePilot: Harnessing LLMs as Speech Interfaces for Physically Assistive Robots — already in graph → `voicepilot-2024`
+- 6. faster-whisper (SYSTRAN/faster-whisper) — already in graph → `faster-whisper`
+- 7. openWakeWord (dscripka/openWakeWord) — already in graph → `openwakeword`
+- 8. OpenWhispr (OpenWhispr/openwhispr) — already in graph → `openwhispr`
+- 9. From Language to Action: LLMs as Autonomous Agents and Tool Users (survey) — already in graph → `llm-agents-tool-users-survey-2025`
+- 10. Vocode Core (vocodedev/vocode-core) — already in graph → `vocode-core`
